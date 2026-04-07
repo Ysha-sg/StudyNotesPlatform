@@ -1,17 +1,24 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+п»їusing Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using StudyNotesPlatform.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем Razor Pages
-builder.Services.AddRazorPages();
-
-// Добавляем контроллеры для API
 builder.Services.AddControllers();
+builder.Services.AddScoped<TokenService>();
 
-// Настройка JWT
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("VueApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
 var jwtKey = builder.Configuration["Jwt:Key"];
 var key = Encoding.ASCII.GetBytes(jwtKey!);
 
@@ -38,25 +45,18 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-builder.Services.AddScoped<TokenService>();
 
 var app = builder.Build();
-
-// Настройка конвейера запросов
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
-}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+app.UseCors("VueApp");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapRazorPages();
 app.MapControllers();
 
 app.Run();

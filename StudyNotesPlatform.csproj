@@ -13,4 +13,9 @@
     <PackageReference Include="Npgsql" Version="10.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="vue-frontend\src\components\" />
+    <Folder Include="vue-frontend\src\views\" />
+  </ItemGroup>
+
 </Project>

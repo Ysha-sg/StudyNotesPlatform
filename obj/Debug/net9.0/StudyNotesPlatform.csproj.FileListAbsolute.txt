@@ -4,8 +4,6 @@ C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\StudyNotesPlatform.AssemblyInfo.cs
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\StudyNotesPlatform.csproj.CoreCompileInputs.cache
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\StudyNotesPlatform.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\StudyNotesPlatform.RazorAssemblyInfo.cache
-C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\StudyNotesPlatform.RazorAssemblyInfo.cs
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\appsettings.Development.json
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\appsettings.json
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\StudyNotesPlatform.staticwebassets.runtime.json
@@ -27,9 +25,7 @@ C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\rjimswa.dswa.cache.json
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
-C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\scopedcss\Pages\Shared\_Layout.cshtml.rz.scp.css
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\scopedcss\bundle\StudyNotesPlatform.styles.css
-C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\scopedcss\projectbundle\StudyNotesPlatform.bundle.scp.css
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\compressed\91j9vkujui-b9sayid5wm.gz
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\compressed\12v2li44tu-61n19gt1b8.gz
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\compressed\albocyvg5l-cixalb1xg8.gz
@@ -93,8 +89,6 @@ C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\compressed\hkpfhkclsw-muycvpuwrr.gz
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\compressed\sunjs9dz79-87fc7y1x7t.gz
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\compressed\aot3bmpamp-mlv21k5csn.gz
-C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\compressed\kbwu56qgf4-wm4r7wbn63.gz
-C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\compressed\zv489bi3tf-wm4r7wbn63.gz
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\staticwebassets.build.json
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\staticwebassets.build.json.cache
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\staticwebassets.development.json
@@ -232,3 +226,22 @@ D:\StudyNotesPlatform-main\bin\Debug\net9.0\System.Text.Encodings.Web.dll
 D:\StudyNotesPlatform-main\bin\Debug\net9.0\System.Text.Json.dll
 D:\StudyNotesPlatform-main\bin\Debug\net9.0\runtimes\browser\lib\net8.0\System.Text.Encodings.Web.dll
 D:\StudyNotesPlatform-main\bin\Debug\net9.0\runtimes\win\lib\net9.0\System.Text.Encodings.Web.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\vue-frontend\jsconfig.json
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\vue-frontend\package-lock.json
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\vue-frontend\package.json
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\BCrypt.Net-Next.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Microsoft.Extensions.Configuration.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Abstractions.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Microsoft.Extensions.Configuration.FileExtensions.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Json.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Abstractions.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Microsoft.Extensions.FileProviders.Physical.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Microsoft.Extensions.FileSystemGlobbing.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Microsoft.Extensions.Primitives.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\Npgsql.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\System.IO.Pipelines.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\System.Text.Encodings.Web.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\System.Text.Json.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\runtimes\browser\lib\net8.0\System.Text.Encodings.Web.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\bin\Debug\net9.0\runtimes\win\lib\net9.0\System.Text.Encodings.Web.dll
+C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\obj\Debug\net9.0\StudyNotesPlatform.sourcelink.json
