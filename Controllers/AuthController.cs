@@ -1,49 +1,106 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
+using StudyNotesPlatform.Data;
 using StudyNotesPlatform.Models;
-using System;
-using System.Threading.Tasks;
+using StudyNotesPlatform.Services;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace StudyNotesPlatform.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
+[ApiController]
 public class AuthController : ControllerBase
 {
-    // Обязательно проверь правильность пароля и имени БД из pgAdmin
-    private readonly string _connectionString = "Host=127;Username=postgres;Password=123;Database=Конспекты";
+    private readonly TokenService _tokenService;
+    private readonly ApplicationDbContext _context;
+
+    public AuthController(TokenService tokenService, ApplicationDbContext context)
+    {
+        _tokenService = tokenService;
+        _context = context;
+    }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] UserRegistrationRequest request)
+    public async Task<IActionResult> Register([FromBody] Models.RegisterModel model)
     {
-        try
+        // 1. Проверка email
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+        if (existingUser != null)
+            return BadRequest(new Models.AuthResponse { Message = "Пользователь с таким email уже существует" });
+
+        // 2. Поиск университета (без учёта регистра)
+        var university = await _context.Universities
+            .FirstOrDefaultAsync(u => EF.Functions.ILike(u.Name, model.UniversityName));
+        if (university == null)
+            return BadRequest(new Models.AuthResponse { Message = $"Университет '{model.UniversityName}' не найден" });
+
+        // 3. Поиск роли "student"
+        var studentRole = await _context.Roles.FirstOrDefaultAsync(r => r.Code == "student");
+        if (studentRole == null)
+            return BadRequest(new Models.AuthResponse { Message = "Роль 'student' не найдена" });
+
+        // 4. Хэширование пароля
+        var passwordHash = HashPassword(model.Password);
+
+        // 5. Создание пользователя
+        var newUser = new User
         {
-            using var conn = new NpgsqlConnection(_connectionString);
-            await conn.OpenAsync();
+            RoleId = studentRole.Id,
+            UniversityId = university.Id,
+            FullName = model.FullName,
+            Email = model.Email,
+            PasswordHash = passwordHash,
+            CreatedAt = DateTime.UtcNow
+        };
 
-            string sql = "INSERT INTO users (role_id, university_id, full_name, email, password_hash) VALUES (@r, @u, @n, @e, @p) RETURNING id;";
+        _context.Users.Add(newUser);
+        await _context.SaveChangesAsync();
 
-            using var cmd = new NpgsqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("r", 1); // По умолчанию роль студента [cite: 1]
-            cmd.Parameters.AddWithValue("u", request.UniversityId); // Внешний ключ на вуз [cite: 2]
-            cmd.Parameters.AddWithValue("n", request.FullName);
-            cmd.Parameters.AddWithValue("e", request.Email);
-            cmd.Parameters.AddWithValue("p", request.Password);
+        var token = _tokenService.GenerateToken(newUser);
 
-            var result = await cmd.ExecuteScalarAsync();
-            return Ok(new { Id = result, Message = "Успешная регистрация в PostgreSQL" });
-        }
-        catch (Exception ex)
+        return Ok(new Models.AuthResponse
         {
-            return BadRequest($"Ошибка БД: {ex.Message}");
-        }
+            Token = token,
+            FullName = newUser.FullName,
+            Email = newUser.Email,
+            UniversityName = university.Name,   // исправлено
+            Message = "Регистрация успешна"
+        });
     }
-}
 
-public class UserRegistrationRequest
-{
-    public string FullName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public int UniversityId { get; set; }
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] Models.LoginModel model)
+    {
+        var user = await _context.Users
+            .Include(u => u.University)
+            .FirstOrDefaultAsync(u => u.Email == model.Email);
+
+        if (user == null || !VerifyPassword(model.Password, user.PasswordHash))
+        {
+            return Unauthorized(new Models.AuthResponse { Message = "Неверный email или пароль" });
+        }
+
+        var token = _tokenService.GenerateToken(user);
+
+        return Ok(new Models.AuthResponse
+        {
+            Token = token,
+            FullName = user.FullName,
+            Email = user.Email,
+            UniversityName = user.University?.Name ?? string.Empty,   // исправлено
+            Message = "Вход выполнен успешно"
+        });
+    }
+
+    private static string HashPassword(string password)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+        return Convert.ToBase64String(bytes);
+    }
+
+    private static bool VerifyPassword(string password, string hash)
+    {
+        return HashPassword(password) == hash;
+    }
 }
