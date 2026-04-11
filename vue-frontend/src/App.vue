@@ -4,9 +4,6 @@
     </div>
 </template>
 
-<script setup>
-</script>
-
 <style>
     * {
         margin: 0;
@@ -15,7 +12,7 @@
     }
 
     body {
-        font-family: system-ui, -apple-system, sans-serif;
-        background: #f5f5f5;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background: #0F0F14;
     }
 </style>

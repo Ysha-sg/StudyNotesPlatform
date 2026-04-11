@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+Ôªøimport { defineStore } from 'pinia'
 import axios from 'axios'
 
 export const useAuthStore = defineStore('auth', {
@@ -16,11 +16,11 @@ export const useAuthStore = defineStore('auth', {
         async login(email, password) {
             try {
                 const response = await axios.post('/api/auth/login', { email, password })
-                const { token, refreshToken, fullName, university, email: userEmail } = response.data
+                const { token, refreshToken, fullName, email: userEmail, universityName } = response.data
 
                 this.accessToken = token
                 this.refreshToken = refreshToken
-                this.user = { fullName, email: userEmail, university }
+                this.user = { fullName, email: userEmail, universityName }
 
                 localStorage.setItem('accessToken', token)
                 localStorage.setItem('refreshToken', refreshToken)
@@ -30,19 +30,24 @@ export const useAuthStore = defineStore('auth', {
             } catch (error) {
                 return {
                     success: false,
-                    message: error.response?.data?.message || 'Œ¯Ë·Í‡ ‚ıÓ‰‡'
+                    message: error.response?.data?.message || '–û—à–∏–±–∫–∞ –≤—Ö–æ–¥–∞'
                 }
             }
         },
 
-        async register(fullName, email, password, university) {
+        async register(fullName, email, password, universityName) {
             try {
-                const response = await axios.post('/api/auth/register', { fullName, email, password, university })
+                const response = await axios.post('/api/auth/register', {
+                    fullName,
+                    email,
+                    password,
+                    universityName
+                })
                 const { token, refreshToken } = response.data
 
                 this.accessToken = token
                 this.refreshToken = refreshToken
-                this.user = { fullName, email, university }
+                this.user = { fullName, email, universityName }
 
                 localStorage.setItem('accessToken', token)
                 localStorage.setItem('refreshToken', refreshToken)
@@ -52,7 +57,7 @@ export const useAuthStore = defineStore('auth', {
             } catch (error) {
                 return {
                     success: false,
-                    message: error.response?.data?.message || 'Œ¯Ë·Í‡ Â„ËÒÚ‡ˆËË'
+                    message: error.response?.data?.message || '–û—à–∏–±–∫–∞ —Ä–µ–≥–∏—Å—Ç—Ä–∞—Ü–∏–∏'
                 }
             }
         },
