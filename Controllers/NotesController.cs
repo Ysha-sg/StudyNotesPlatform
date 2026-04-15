@@ -24,6 +24,15 @@ public class ModerateModel
     public string? Comment { get; set; }
 }
 
+// DTO для обновления конспекта
+public class UpdateNoteModel
+{
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public int? SubjectId { get; set; }
+    public int? TeacherId { get; set; }
+}
+
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
@@ -64,19 +73,16 @@ public class NotesController : ControllerBase
     [Authorize(Roles = "student")]
     public async Task<IActionResult> UploadNote([FromForm] UploadNoteModel model)
     {
-        // 1. Получаем текущего пользователя
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return Unauthorized();
 
-        // 2. Валидация предмета
         var subject = await _context.Subjects.FindAsync(model.SubjectId);
         if (subject == null)
             return BadRequest("Предмет не найден");
         if (subject.UniversityId != user.UniversityId)
             return BadRequest("Предмет не принадлежит вашему университету");
 
-        // 3. Валидация преподавателя (если указан)
         if (model.TeacherId.HasValue)
         {
             var teacher = await _context.Teachers.FindAsync(model.TeacherId.Value);
@@ -86,7 +92,6 @@ public class NotesController : ControllerBase
                 return BadRequest("Преподаватель не принадлежит вашему университету");
         }
 
-        // 4. Сохраняем файл на диск
         if (model.File == null || model.File.Length == 0)
             return BadRequest("Файл не загружен");
 
@@ -104,7 +109,6 @@ public class NotesController : ControllerBase
 
         var relativePath = $"/uploads/{uniqueFileName}";
 
-        // 5. Создаём запись в БД
         var note = new Note
         {
             UserId = userId,
@@ -194,5 +198,141 @@ public class NotesController : ControllerBase
             .Select(s => new { s.Id, s.Code, s.Name, s.Description })
             .ToListAsync();
         return Ok(statuses);
+    }
+
+    // GET: api/notes (главный каталог — только одобренные конспекты)
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetNotes(
+        [FromQuery] string? search,
+        [FromQuery] string? university,
+        [FromQuery] string? subject,
+        [FromQuery] string? teacher)
+    {
+        var query = _context.Notes
+            .Include(n => n.University)
+            .Include(n => n.Subject)
+            .Include(n => n.Teacher)
+            .Where(n => n.StatusId == 2);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(n => n.Title.Contains(search));
+        }
+
+        if (!string.IsNullOrWhiteSpace(university))
+        {
+            query = query.Where(n => n.University != null && n.University.Name == university);
+        }
+
+        if (!string.IsNullOrWhiteSpace(subject))
+        {
+            query = query.Where(n => n.Subject != null && n.Subject.Name == subject);
+        }
+
+        if (!string.IsNullOrWhiteSpace(teacher))
+        {
+            query = query.Where(n => n.Teacher != null && n.Teacher.FullName.Contains(teacher));
+        }
+
+        var notes = await query
+            .OrderByDescending(n => n.AverageRating ?? 0)
+            .Select(n => new
+            {
+                n.Id,
+                n.Title,
+                Subject = n.Subject != null ? n.Subject.Name : "",
+                Teacher = n.Teacher != null ? n.Teacher.FullName : "",
+                University = n.University != null ? n.University.Name : "",
+                Rating = n.AverageRating ?? 0,
+                DownloadsCount = n.DownloadsCount
+            })
+            .ToListAsync();
+
+        return Ok(notes);
+    }
+
+    // PUT: api/notes/{id} - обновление конспекта
+    [HttpPut("{id}")]
+    [Authorize(Roles = "student,admin")]
+    public async Task<IActionResult> UpdateNote(int id, [FromBody] UpdateNoteModel model)
+    {
+        var note = await _context.Notes.FindAsync(id);
+        if (note == null)
+            return NotFound(new { message = "Конспект не найден" });
+
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (note.UserId != userId && userRole != "admin")
+            return Forbid("Вы можете редактировать только свои конспекты");
+
+        if (!string.IsNullOrWhiteSpace(model.Title))
+            note.Title = model.Title;
+
+        if (model.Description != null)
+            note.Description = model.Description;
+
+        if (model.SubjectId.HasValue)
+        {
+            var subject = await _context.Subjects.FindAsync(model.SubjectId.Value);
+            if (subject == null)
+                return BadRequest(new { message = "Предмет не найден" });
+            note.SubjectId = model.SubjectId.Value;
+        }
+
+        if (model.TeacherId.HasValue)
+        {
+            var teacher = await _context.Teachers.FindAsync(model.TeacherId.Value);
+            if (teacher == null)
+                return BadRequest(new { message = "Преподаватель не найден" });
+            note.TeacherId = model.TeacherId.Value;
+        }
+
+        if (note.StatusId == 2)
+        {
+            note.StatusId = 1;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Конспект обновлён. Если он был одобрен, отправлен на повторную модерацию",
+            note.Id,
+            note.Title,
+            note.StatusId
+        });
+    }
+
+    // DELETE: api/notes/{id} - удаление конспекта
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "student,admin")]
+    public async Task<IActionResult> DeleteNote(int id)
+    {
+        var note = await _context.Notes.FindAsync(id);
+        if (note == null)
+            return NotFound(new { message = "Конспект не найден" });
+
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (note.UserId != userId && userRole != "admin")
+            return Forbid("Вы можете удалять только свои конспекты");
+
+        if (!string.IsNullOrEmpty(note.FilePath))
+        {
+            var filePath = Path.Combine(_env.WebRootPath ?? _env.ContentRootPath,
+                note.FilePath.TrimStart('/'));
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+        }
+
+        _context.Notes.Remove(note);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Конспект успешно удалён" });
     }
 }
