@@ -14,7 +14,6 @@
                 </div>
             </div>
 
-            <!-- Аватар с выпадающим меню -->
             <div class="avatar-menu" @click.stop="toggleMenu">
                 <div class="avatar">
                     <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -26,7 +25,7 @@
                 <div v-if="isMenuOpen" class="dropdown-menu">
                     <template v-if="authStore.isAuthenticated">
                         <div class="user-name">{{ authStore.user?.fullName }}</div>
-                        <div class="menu-item" @click="goToMyNotes">Мои конспекты</div>
+                        <div class="menu-item" @click="goToProfile">Мои конспекты</div>
                         <div class="menu-item" @click="goToAddNote">Добавить конспект</div>
                         <div class="menu-item logout" @click="handleLogout">Выйти</div>
                     </template>
@@ -46,47 +45,25 @@
 
         <!-- Фильтры -->
         <div class="filters">
-            <!-- Фильтр по вузу -->
             <div class="filter-item">
                 <select v-model="filters.university">
                     <option value="">Все вузы</option>
                     <option v-for="uni in universities" :key="uni" :value="uni">{{ uni }}</option>
                 </select>
-                <span class="chevron"></span>
             </div>
-
-            <!-- Фильтр по предмету -->
             <div class="filter-item">
                 <select v-model="filters.subject">
                     <option value="">Все предметы</option>
                     <option v-for="subj in subjects" :key="subj" :value="subj">{{ subj }}</option>
                 </select>
-                <span class="chevron"></span>
             </div>
-
-            <!-- Фильтр по преподавателю (комбобокс) -->
-            <div class="filter-item combobox">
-                <input type="text"
-                       v-model="filters.teacherInput"
-                       @input="onTeacherInput"
-                       @focus="showTeacherDropdown = true"
-                       placeholder="Все преподаватели" />
-                <span class="chevron" @click="toggleTeacherDropdown"></span>
-                <div v-if="showTeacherDropdown && filteredTeachers.length > 0" class="dropdown-list">
-                    <div v-for="teacher in filteredTeachers"
-                         :key="teacher"
-                         class="dropdown-option"
-                         @click="selectTeacher(teacher)">
-                        {{ teacher }}
-                    </div>
-                </div>
+            <div class="filter-item">
+                <input type="text" v-model="filters.teacher" placeholder="Все преподаватели" />
             </div>
         </div>
 
-        <!-- Результаты -->
         <div class="results-count">Показано {{ filteredNotes.length }} результатов</div>
 
-        <!-- Сетка карточек — 2 в строку, карточки широкие -->
         <div class="notes-grid">
             <div v-for="note in filteredNotes" :key="note.id" class="note-card">
                 <div class="card-icon">
@@ -104,12 +81,12 @@
                             <span class="star"></span>
                             <span>{{ note.rating }}</span>
                         </div>
-                        <div class="downloads">{{ note.downloads }} скачиваний</div>
+                        <div class="downloads">{{ note.downloadsCount }} скачиваний</div>
                         <button class="open-btn" @click="openNote(note.id)">Открыть</button>
                     </div>
                 </div>
-                <div class="like-btn" @click.stop="toggleFavorite(note.id)">
-                    <div class="heart" :class="{ liked: note.isFavorite }"></div>
+                <div class="like-btn" @click.stop="toggleFavorite(note)">
+                    <div class="heart" :class="{ liked: favoritesStore.isFavorite(note.id) }"></div>
                 </div>
             </div>
         </div>
@@ -120,81 +97,29 @@
     import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
     import { useRouter } from 'vue-router'
     import { useAuthStore } from '@/stores/auth'
+    import { useFavoritesStore } from '@/stores/favorites'
+    import api from '@/services/api'
 
     const router = useRouter()
     const authStore = useAuthStore()
+    const favoritesStore = useFavoritesStore()
 
-    // Состояние меню
     const isMenuOpen = ref(false)
-
-    // Поиск и фильтры
     const searchQuery = ref('')
     const filters = reactive({
         university: '',
         subject: '',
-        teacherInput: '',
         teacher: ''
     })
 
-    // Состояние выпадающего списка преподавателей
-    const showTeacherDropdown = ref(false)
+    const universities = ref([])
+    const subjects = ref([])
+    const allTeachers = ref([])
 
-    // Данные для фильтров
-    const universities = ['МГУ', 'СПбГУ', 'МФТИ', 'НИУ ВШЭ', 'ПГНИУ', 'ПГГПУ']
-    const subjects = ['Базы данных', 'Алгоритмы', 'Педагогика', 'Дискретная математика']
-    const allTeachers = ['Проф. Иванов А.С.', 'Доц. Смирнов И.В.', 'Проф. Кузнецова Е.В.', 'Доц. Орлов Д.М.']
+    // Конспекты загружаем из API
+    const notes = ref([])
 
-    // Отфильтрованные преподаватели
-    const filteredTeachers = computed(() => {
-        if (!filters.teacherInput) return allTeachers
-        return allTeachers.filter(t => t.toLowerCase().includes(filters.teacherInput.toLowerCase()))
-    })
-
-    // Тестовые конспекты
-    const notes = ref([
-        {
-            id: 1,
-            title: 'Введение в базы данных',
-            subject: 'Базы данных',
-            teacher: 'Проф. Иванов А.С.',
-            university: 'ПГНИУ',
-            rating: 9.8,
-            downloads: 1250,
-            isFavorite: false
-        },
-        {
-            id: 2,
-            title: 'Алгоритмы и структуры данных',
-            subject: 'Алгоритмы',
-            teacher: 'Доц. Смирнов И.В.',
-            university: 'СПбГУ',
-            rating: 9.6,
-            downloads: 980,
-            isFavorite: false
-        },
-        {
-            id: 3,
-            title: 'Педагогика: основы обучения',
-            subject: 'Педагогика',
-            teacher: 'Проф. Кузнецова Е.В.',
-            university: 'ПГГПУ',
-            rating: 9.9,
-            downloads: 760,
-            isFavorite: false
-        },
-        {
-            id: 4,
-            title: 'Дискретная математика',
-            subject: 'Дискретная математика',
-            teacher: 'Доц. Орлов Д.М.',
-            university: 'ПГНИУ',
-            rating: 9.7,
-            downloads: 1100,
-            isFavorite: false
-        }
-    ])
-
-    // Фильтрация
+    // Фильтрация конспектов
     const filteredNotes = computed(() => {
         return notes.value.filter(note => {
             const matchSearch = note.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -206,20 +131,42 @@
         })
     })
 
-    // Методы для фильтра преподавателей
-    const onTeacherInput = () => {
-        filters.teacher = filters.teacherInput
-        showTeacherDropdown.value = true
+    // Загрузка конспектов с сервера
+    const loadNotes = async () => {
+        try {
+            const response = await api.get('/notes')
+            notes.value = response.data
+        } catch (error) {
+            console.error('Ошибка загрузки конспектов:', error)
+        }
     }
 
-    const toggleTeacherDropdown = () => {
-        showTeacherDropdown.value = !showTeacherDropdown.value
+    // Загрузка фильтров
+    const loadUniversities = async () => {
+        try {
+            const response = await api.get('/lookup/all-universities')
+            universities.value = response.data.map(u => u.name)
+        } catch (error) {
+            console.error('Ошибка загрузки университетов:', error)
+        }
     }
 
-    const selectTeacher = (teacher) => {
-        filters.teacherInput = teacher
-        filters.teacher = teacher
-        showTeacherDropdown.value = false
+    const loadSubjects = async () => {
+        try {
+            const response = await api.get('/lookup/all-subjects')
+            subjects.value = response.data.map(s => s.name)
+        } catch (error) {
+            console.error('Ошибка загрузки предметов:', error)
+        }
+    }
+
+    const loadTeachers = async () => {
+        try {
+            const response = await api.get('/lookup/all-teachers')
+            allTeachers.value = response.data.map(t => t.fullName)
+        } catch (error) {
+            console.error('Ошибка загрузки преподавателей:', error)
+        }
     }
 
     // Методы меню
@@ -241,8 +188,8 @@
         closeMenu()
     }
 
-    const goToMyNotes = () => {
-        router.push('/my-notes')
+    const goToProfile = () => {
+        router.push('/profile')
         closeMenu()
     }
 
@@ -261,25 +208,26 @@
         router.push(`/note/${id}`)
     }
 
-    const toggleFavorite = (id) => {
-        const note = notes.value.find(n => n.id === id)
-        if (note) {
-            note.isFavorite = !note.isFavorite
+    const toggleFavorite = async (note) => {
+        const isNowFavorite = await favoritesStore.toggleFavorite(note)
+        const currentNote = notes.value.find(n => n.id === note.id)
+        if (currentNote) {
+            currentNote.isFavorite = isNowFavorite
         }
     }
 
-    // Закрытие меню при клике вне
     const handleClickOutside = (event) => {
         if (!event.target.closest('.avatar-menu')) {
             isMenuOpen.value = false
-        }
-        if (!event.target.closest('.combobox')) {
-            showTeacherDropdown.value = false
         }
     }
 
     onMounted(() => {
         document.addEventListener('click', handleClickOutside)
+        loadNotes()
+        loadUniversities()
+        loadSubjects()
+        loadTeachers()
     })
 
     onUnmounted(() => {
@@ -295,7 +243,6 @@
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    /* Шапка */
     .header {
         display: flex;
         justify-content: space-between;
@@ -338,7 +285,6 @@
         margin: 0;
     }
 
-    /* Аватар и меню */
     .avatar-menu {
         position: relative;
         cursor: pointer;
@@ -373,7 +319,7 @@
 
     .menu-item {
         padding: 12px 20px;
-        font-size: 24px;
+        font-size: 20px;
         font-weight: 500;
         color: #FFFFFF;
         cursor: pointer;
@@ -389,7 +335,6 @@
             border-top: 1px solid #2A2A35;
         }
 
-    /* Поиск */
     .search-bar {
         position: relative;
         width: 100%;
@@ -427,7 +372,6 @@
             outline: none;
         }
 
-    /* Фильтры */
     .filters {
         display: flex;
         gap: 28px;
@@ -435,7 +379,6 @@
     }
 
     .filter-item {
-        position: relative;
         flex: 1;
     }
 
@@ -463,64 +406,18 @@
                 border-color: #8B7FFF;
             }
 
-    .chevron {
-        position: absolute;
-        right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 24px;
-        height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23FFFFFF" stroke-width="3"%3E%3Cpolyline points="6 9 12 15 18 9"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
-        pointer-events: none;
-    }
-
-    .combobox .chevron {
-        pointer-events: auto;
-        cursor: pointer;
-    }
-
-    .dropdown-list {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: #1A1A22;
-        border: 1px solid #2A2A35;
-        border-radius: 16px;
-        margin-top: 8px;
-        z-index: 100;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-
-    .dropdown-option {
-        padding: 12px 20px;
-        font-size: 20px;
-        color: #FFFFFF;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-
-        .dropdown-option:hover {
-            background: #2A2A35;
-        }
-
-    /* Результаты */
     .results-count {
         font-size: 18px;
         color: #A0A0B0;
         margin-bottom: 24px;
     }
 
-    /* СЕТКА КАРТОЧЕК — 2 В СТРОКУ, КАРТОЧКИ ШИРОКИЕ */
     .notes-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 32px;
     }
 
-    /* КАРТОЧКА — УВЕЛИЧЕННАЯ В 2 РАЗА */
     .note-card {
         background: #1A1A22;
         border: 1px solid #2A2A35;
@@ -537,7 +434,6 @@
             box-shadow: 0px 8px 4px rgba(108, 99, 255, 0.15);
         }
 
-    /* Иконка файла — увеличенная */
     .card-icon {
         width: 100px;
         height: 110px;
@@ -557,7 +453,6 @@
         background-size: contain;
     }
 
-    /* Контент карточки */
     .card-content {
         flex: 1;
         display: flex;
@@ -587,7 +482,6 @@
         margin-bottom: 24px;
     }
 
-    /* Футер карточки */
     .card-footer {
         display: flex;
         align-items: center;
@@ -606,7 +500,7 @@
     .star {
         width: 28px;
         height: 28px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFE100"%3E%3Cpath d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFE100"%3E%3Cpolygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9 12 2"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
@@ -640,7 +534,6 @@
             transform: translateY(-2px);
         }
 
-    /* Сердечко — увеличенное */
     .like-btn {
         position: absolute;
         top: 24px;
@@ -661,16 +554,9 @@
             background-size: contain;
         }
 
-    /* Адаптивность */
-    @media (max-width: 1400px) {
-        .catalog-page {
-            padding: 32px 40px;
-        }
-    }
-
     @media (max-width: 1100px) {
         .catalog-page {
-            padding: 24px 32px;
+            padding: 20px 40px;
         }
 
         .notes-grid {

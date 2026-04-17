@@ -1,6 +1,6 @@
 ﻿<template>
     <div class="note-details-page">
-        <!-- Шапка с логотипом и аватаром -->
+        <!-- Шапка -->
         <div class="header">
             <div class="logo-area" @click="goToCatalog">
                 <div class="logo-icon">
@@ -22,7 +22,7 @@
                 <div v-if="isMenuOpen" class="dropdown-menu">
                     <template v-if="authStore.isAuthenticated">
                         <div class="user-name">{{ authStore.user?.fullName }}</div>
-                        <div class="menu-item" @click="goToMyNotes">Мои конспекты</div>
+                        <div class="menu-item" @click="goToProfile">Мои конспекты</div>
                         <div class="menu-item" @click="goToAddNote">Добавить конспект</div>
                         <div class="menu-item logout" @click="handleLogout">Выйти</div>
                     </template>
@@ -43,8 +43,7 @@
         </div>
 
         <!-- Основной контент -->
-        <div class="content">
-            <!-- Левая колонка -->
+        <div class="content" v-if="note.id">
             <div class="main-column">
                 <h1 class="note-title">{{ note.title }}</h1>
 
@@ -67,20 +66,18 @@
                     </div>
                 </div>
 
-                <!-- Описание -->
                 <div class="description-block">
                     <h3>Описание</h3>
                     <p>{{ note.description }}</p>
                 </div>
 
-                <!-- Файл конспекта -->
                 <div class="file-block">
                     <h3>Файл конспекта</h3>
                     <div class="file-card">
                         <div class="file-icon-large"></div>
                         <div class="file-info">
-                            <div class="file-name">{{ note.fileName }}</div>
-                            <div class="file-type">{{ note.fileType }}</div>
+                            <div class="file-name">{{ getFileName(note.filePath) }}</div>
+                            <div class="file-type">PDF файл</div>
                         </div>
                         <button class="view-file-btn" @click="viewFile">Посмотреть файл</button>
                         <button class="download-file-btn" @click="downloadFile">Скачать конспект</button>
@@ -88,9 +85,7 @@
                 </div>
             </div>
 
-            <!-- Правая колонка -->
             <div class="side-column">
-                <!-- Рейтинг -->
                 <div class="rating-block">
                     <div class="rating-header">
                         <h3>Рейтинг</h3>
@@ -108,12 +103,18 @@
                     <div class="rating-line"></div>
                 </div>
 
-                <!-- Пожаловаться -->
                 <div class="complaint-block">
-                    <button class="complaint-btn" @click="openComplaintModal">Пожаловаться</button>
+                    <div class="complaint-label">
+                        <div class="flag-icon"></div>
+                        <span>Пожаловаться</span>
+                    </div>
                     <button class="report-btn" @click="openComplaintModal">Сообщить о проблеме</button>
                 </div>
             </div>
+        </div>
+
+        <div v-else class="loading">
+            <p>Загрузка...</p>
         </div>
 
         <!-- Модальное окно жалобы -->
@@ -156,7 +157,6 @@
             </div>
         </div>
 
-        <!-- Уведомление об успешной отправке -->
         <div v-if="showNotification" class="notification">
             <div class="notification-content">
                 <div class="check-icon"></div>
@@ -168,177 +168,206 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+    import { ref, onMounted, onUnmounted } from 'vue'
+    import { useRouter, useRoute } from 'vue-router'
+    import { useAuthStore } from '@/stores/auth'
+    import api from '@/services/api'
 
-const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
+    const router = useRouter()
+    const route = useRoute()
+    const authStore = useAuthStore()
 
-// Состояние меню
-const isMenuOpen = ref(false)
+    const isMenuOpen = ref(false)
 
-// Данные конспекта (временные, потом заменим на API)
-const note = ref({
-  id: 1,
-  title: 'Введение в базы данных',
-  subject: 'Базы данных',
-  university: 'ПГНИУ',
-  teacher: 'Проф. Иванов А.С.',
-  uploadedAt: '2026-03-15T00:00:00',
-  description: 'Полный конспект лекций по основам баз данных. Включает темы: реляционная модель данных, SQL, нормализация, проектирование баз данных. Материал содержит примеры запросов и практические задания.',
-  fileName: 'bazy_dannykh_vvedenie.pdf',
-  fileType: 'PDF файл',
-  rating: 9.8,
-  downloadsCount: 1250
-})
+    const note = ref({
+        id: null,
+        title: '',
+        subject: '',
+        university: '',
+        teacher: '',
+        uploadedAt: '',
+        description: '',
+        filePath: '',
+        rating: 0,
+        downloadsCount: 0
+    })
 
-// Модальное окно жалобы
-const showComplaintModal = ref(false)
-const isReasonOpen = ref(false)
-const selectedReason = ref('')
-const complaintComment = ref('')
-const complaintReasons = ['Нарушение правил', 'Не соответствует описанию', 'Неправильный предмет', 'Плохое качество']
+    const showComplaintModal = ref(false)
+    const isReasonOpen = ref(false)
+    const selectedReason = ref('')
+    const complaintComment = ref('')
+    const complaintReasons = ['Нарушение правил', 'Не соответствует описанию', 'Неправильный предмет', 'Плохое качество']
+    const showNotification = ref(false)
+    let notificationTimeout = null
 
-// Уведомление
-const showNotification = ref(false)
-let notificationTimeout = null
+    // Сохранение в историю просмотров (localStorage)
+    const saveToHistory = (noteData) => {
+        const history = JSON.parse(localStorage.getItem('downloadHistory') || '[]')
+        const existingIndex = history.findIndex(item => item.id === noteData.id)
+        if (existingIndex !== -1) {
+            history.splice(existingIndex, 1)
+        }
+        history.unshift({
+            id: noteData.id,
+            title: noteData.title,
+            subject: noteData.subject,
+            teacher: noteData.teacher,
+            university: noteData.university,
+            rating: noteData.rating,
+            downloadsCount: noteData.downloadsCount,
+            downloadedAt: new Date().toISOString()
+        })
+        if (history.length > 20) history.pop()
+        localStorage.setItem('downloadHistory', JSON.stringify(history))
+    }
 
-// Методы
-const toggleMenu = () => {
-  isMenuOpen.value = !isMenuOpen.value
-}
+    const loadNote = async () => {
+        try {
+            const id = route.params.id
+            const response = await api.get(`/notes/${id}`)
+            note.value = response.data
+            saveToHistory(note.value)
+        } catch (error) {
+            console.error('Ошибка загрузки конспекта:', error)
+        }
+    }
 
-const closeMenu = () => {
-  isMenuOpen.value = false
-}
+    const toggleMenu = () => {
+        isMenuOpen.value = !isMenuOpen.value
+    }
 
-const goToCatalog = () => {
-  router.push('/')
-}
+    const closeMenu = () => {
+        isMenuOpen.value = false
+    }
 
-const goBack = () => {
-  // Если есть история переходов — возвращаемся
-  if (window.history.length > 1) {
-    router.back()
-  } else {
-    // Если истории нет — идём на главную (каталог)
-    router.push('/')
-  }
-}
+    const goToCatalog = () => {
+        router.push('/')
+    }
 
-const goToLogin = () => {
-  router.push('/login')
-  closeMenu()
-}
+    const goBack = () => {
+        router.back()
+    }
 
-const goToRegister = () => {
-  router.push('/register')
-  closeMenu()
-}
+    const goToLogin = () => {
+        router.push('/login')
+        closeMenu()
+    }
 
-const goToMyNotes = () => {
-  router.push('/my-notes')
-  closeMenu()
-}
+    const goToRegister = () => {
+        router.push('/register')
+        closeMenu()
+    }
 
-const goToAddNote = () => {
-  router.push('/add-note')
-  closeMenu()
-}
+    const goToProfile = () => {
+        router.push('/profile')
+        closeMenu()
+    }
 
-const handleLogout = () => {
-  authStore.logout()
-  closeMenu()
-  router.push('/login')
-}
+    const goToAddNote = () => {
+        router.push('/add-note')
+        closeMenu()
+    }
 
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
-}
+    const handleLogout = () => {
+        authStore.logout()
+        closeMenu()
+        router.push('/login')
+    }
 
-const viewFile = () => {
-  // TODO: открыть файл в новой вкладке
-  window.open(`/uploads/${note.value.fileName}`, '_blank')
-}
+    const formatDate = (dateString) => {
+        if (!dateString) return ''
+        const date = new Date(dateString)
+        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+    }
 
-const downloadFile = () => {
-  // TODO: скачать файл
-  const link = document.createElement('a')
-  link.href = `/uploads/${note.value.fileName}`
-  link.download = note.value.fileName
-  link.click()
-}
+    const getFileName = (filePath) => {
+        if (!filePath) return ''
+        return filePath.split('/').pop()
+    }
 
-const rateNote = (rating) => {
-  // TODO: отправить оценку на бэкенд
-  console.log('Оценка:', rating)
-  note.value.rating = rating
-}
+    const viewFile = () => {
+        if (note.value.filePath) {
+            window.open(note.value.filePath, '_blank')
+        }
+    }
 
-// Методы для модального окна
-const openComplaintModal = () => {
-  showComplaintModal.value = true
-  selectedReason.value = ''
-  complaintComment.value = ''
-}
+    const downloadFile = () => {
+        if (note.value.filePath) {
+            const link = document.createElement('a')
+            link.href = note.value.filePath
+            link.download = getFileName(note.value.filePath)
+            link.click()
+        }
+    }
 
-const closeComplaintModal = () => {
-  showComplaintModal.value = false
-  isReasonOpen.value = false
-}
+    const rateNote = async (rating) => {
+        try {
+            await api.post(`/notes/${note.value.id}/rate`, { rating })
+            note.value.rating = rating
+        } catch (error) {
+            console.error('Ошибка при оценке:', error)
+        }
+    }
 
-const toggleReasonDropdown = () => {
-  isReasonOpen.value = !isReasonOpen.value
-}
+    const openComplaintModal = () => {
+        showComplaintModal.value = true
+        selectedReason.value = ''
+        complaintComment.value = ''
+    }
 
-const selectReason = (reason) => {
-  selectedReason.value = reason
-  isReasonOpen.value = false
-}
+    const closeComplaintModal = () => {
+        showComplaintModal.value = false
+        isReasonOpen.value = false
+    }
 
-const submitComplaint = () => {
-  if (!selectedReason.value) {
-    alert('Пожалуйста, выберите причину жалобы')
-    return
-  }
+    const toggleReasonDropdown = () => {
+        isReasonOpen.value = !isReasonOpen.value
+    }
 
-  // TODO: отправить жалобу на бэкенд
-  console.log('Жалоба:', {
-    noteId: note.value.id,
-    reason: selectedReason.value,
-    comment: complaintComment.value
-  })
+    const selectReason = (reason) => {
+        selectedReason.value = reason
+        isReasonOpen.value = false
+    }
 
-  closeComplaintModal()
-  showNotification.value = true
+    const submitComplaint = () => {
+        if (!selectedReason.value) {
+            alert('Пожалуйста, выберите причину жалобы')
+            return
+        }
 
-  if (notificationTimeout) clearTimeout(notificationTimeout)
-  notificationTimeout = setTimeout(() => {
-    showNotification.value = false
-  }, 3000)
-}
+        console.log('Жалоба:', {
+            noteId: note.value.id,
+            reason: selectedReason.value,
+            comment: complaintComment.value
+        })
 
-// Закрытие меню при клике вне
-const handleClickOutside = (event) => {
-  if (!event.target.closest('.avatar-menu')) {
-    isMenuOpen.value = false
-  }
-  if (!event.target.closest('.custom-select')) {
-    isReasonOpen.value = false
-  }
-}
+        closeComplaintModal()
+        showNotification.value = true
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+        if (notificationTimeout) clearTimeout(notificationTimeout)
+        notificationTimeout = setTimeout(() => {
+            showNotification.value = false
+        }, 3000)
+    }
 
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-  if (notificationTimeout) clearTimeout(notificationTimeout)
-})
+    const handleClickOutside = (event) => {
+        if (!event.target.closest('.avatar-menu')) {
+            isMenuOpen.value = false
+        }
+        if (!event.target.closest('.custom-select')) {
+            isReasonOpen.value = false
+        }
+    }
+
+    onMounted(() => {
+        document.addEventListener('click', handleClickOutside)
+        loadNote()
+    })
+
+    onUnmounted(() => {
+        document.removeEventListener('click', handleClickOutside)
+        if (notificationTimeout) clearTimeout(notificationTimeout)
+    })
 </script>
 
 <style scoped>
@@ -349,7 +378,6 @@ onUnmounted(() => {
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    /* Шапка */
     .header {
         display: flex;
         justify-content: space-between;
@@ -435,14 +463,12 @@ onUnmounted(() => {
             border-top: 1px solid #2A2A35;
         }
 
-    /* Стрелка назад */
     .back-button {
         cursor: pointer;
         margin-bottom: 24px;
         width: 49px;
     }
 
-    /* Основной контент */
     .content {
         display: flex;
         gap: 40px;
@@ -456,7 +482,13 @@ onUnmounted(() => {
         width: 340px;
     }
 
-    /* Заголовок */
+    .loading {
+        text-align: center;
+        padding: 100px;
+        color: #FFFFFF;
+        font-size: 24px;
+    }
+
     .note-title {
         font-size: 36px;
         font-weight: 700;
@@ -464,7 +496,6 @@ onUnmounted(() => {
         margin-bottom: 24px;
     }
 
-    /* Мета-информация */
     .note-meta {
         display: flex;
         flex-wrap: wrap;
@@ -509,7 +540,6 @@ onUnmounted(() => {
         background-size: contain;
     }
 
-    /* Блок описания */
     .description-block {
         background: #1A1A22;
         border: 1px solid #2A2A35;
@@ -531,7 +561,6 @@ onUnmounted(() => {
             color: #DFDFEA;
         }
 
-    /* Блок файла */
     .file-block h3 {
         font-size: 20px;
         font-weight: 700;
@@ -620,7 +649,6 @@ onUnmounted(() => {
             transform: translateY(-2px);
         }
 
-    /* Правая колонка */
     .rating-block {
         background: #1A1A22;
         border: 1px solid #2A2A35;
@@ -688,33 +716,40 @@ onUnmounted(() => {
     .complaint-block {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 16px;
     }
 
-    .complaint-btn, .report-btn {
-        padding: 14px;
-        border-radius: 14px;
+    .complaint-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: default;
+    }
+
+    .flag-icon {
+        width: 24px;
+        height: 24px;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23FFFFFF" stroke-width="2"%3E%3Cpath d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/%3E%3Cline x1="4" y1="22" x2="4" y2="15"/%3E%3C/svg%3E') no-repeat center;
+        background-size: contain;
+    }
+
+    .complaint-label span {
         font-size: 20px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-align: center;
-    }
-
-    .complaint-btn {
-        background: transparent;
-        border: 1px solid #2A2A35;
+        font-weight: 500;
         color: #FFFFFF;
     }
-
-        .complaint-btn:hover {
-            border-color: #6C63FF;
-        }
 
     .report-btn {
         background: #6C63FF;
         border: none;
+        border-radius: 14px;
+        padding: 14px;
+        font-size: 20px;
+        font-weight: 700;
         color: #FFFFFF;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
     }
 
         .report-btn:hover {
@@ -722,7 +757,6 @@ onUnmounted(() => {
             transform: translateY(-2px);
         }
 
-    /* Модальное окно */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -754,14 +788,6 @@ onUnmounted(() => {
         position: relative;
     }
 
-    .flag-icon {
-        width: 40px;
-        height: 40px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="2"%3E%3Cpath d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/%3E%3Cline x1="4" y1="22" x2="4" y2="15"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
-        z-index: 1;
-    }
-
     .flag-bg {
         position: absolute;
         width: 46px;
@@ -784,11 +810,11 @@ onUnmounted(() => {
         margin-bottom: 32px;
     }
 
-    .form-group {
+    .modal-content .form-group {
         margin-bottom: 24px;
     }
 
-        .form-group label {
+        .modal-content .form-group label {
             display: block;
             font-size: 20px;
             font-weight: 400;
@@ -906,7 +932,6 @@ onUnmounted(() => {
             transform: translateY(-2px);
         }
 
-    /* Уведомление */
     .notification {
         position: fixed;
         bottom: 30px;
@@ -938,10 +963,10 @@ onUnmounted(() => {
         color: #FFFFFF;
     }
 
-    .close-icon {
+    .notification-content .close-icon {
         width: 24px;
         height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23EF4444"%3E%3Cpath d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23EF4444" stroke-width="2"%3E%3Cline x1="18" y1="6" x2="6" y2="18"/%3E%3Cline x1="6" y1="6" x2="18" y2="18"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
         cursor: pointer;
     }
@@ -958,7 +983,6 @@ onUnmounted(() => {
         }
     }
 
-    /* Адаптивность */
     @media (max-width: 1100px) {
         .note-details-page {
             padding: 20px 40px;

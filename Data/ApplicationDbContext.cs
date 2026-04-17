@@ -22,6 +22,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Subject> Subjects { get; set; }
     public DbSet<Teacher> Teachers { get; set; }
 
+    // DbSet для избранного
+    public DbSet<Favorite> Favorites { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -152,7 +155,7 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Code).IsUnique();
         });
 
-        // Subjects (новая таблица)
+        // Subjects
         modelBuilder.Entity<Subject>(entity =>
         {
             entity.ToTable("subjects");
@@ -166,7 +169,7 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Teachers (новая таблица)
+        // Teachers
         modelBuilder.Entity<Teacher>(entity =>
         {
             entity.ToTable("teachers");
@@ -178,6 +181,29 @@ public class ApplicationDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.UniversityId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Favorites (избранное) — НОВЫЙ БЛОК
+        modelBuilder.Entity<Favorite>(entity =>
+        {
+            entity.ToTable("favorites");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("favorite_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.NoteId).HasColumnName("note_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Note)
+                  .WithMany()
+                  .HasForeignKey(e => e.NoteId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.UserId, e.NoteId }).IsUnique();
         });
     }
 }

@@ -114,6 +114,22 @@
   },
   {
     "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "GetNote",
+    "RelativePath": "api/Notes/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
     "Method": "UpdateNote",
     "RelativePath": "api/Notes/{id}",
     "HttpMethod": "PUT",
@@ -151,6 +167,22 @@
   },
   {
     "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "ToggleFavorite",
+    "RelativePath": "api/Notes/{id}/favorite",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
     "Method": "GetAllNotes",
     "RelativePath": "api/Notes/all",
     "HttpMethod": "GET",
@@ -163,6 +195,16 @@
         "IsRequired": false
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "GetFavorites",
+    "RelativePath": "api/Notes/favorites",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -260,6 +302,22 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.ProfileController",
+    "Method": "UpdateProfile",
+    "RelativePath": "api/Profile/update",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "StudyNotesPlatform.Controllers.UpdateProfileModel",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   }
 ]
