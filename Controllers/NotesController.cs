@@ -54,7 +54,7 @@ public class NotesController : ControllerBase
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _env;
 
-    private const int AutoCheckWordLimit = 1000;
+    private const int AutoCheckWordLimit = 2000;
     private const int MaxTextCharsForCheck = 24_000;
     private const int MaxBytesForHeuristicExtraction = 2 * 1024 * 1024;
 
