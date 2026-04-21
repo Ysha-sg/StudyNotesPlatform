@@ -19,7 +19,7 @@ export default defineConfig({
         port: 5173, // Порт, на котором работает ваш Vue-фронтенд
         proxy: {
             '/api': {
-                target: 'https://localhost:7110', // АДРЕС ВАШЕГО C# БЭКЕНДА
+                target: 'https://localhost:7111', // АДРЕС ВАШЕГО C# БЭКЕНДА
                 changeOrigin: true,
                 secure: false,     // Отключаем проверку SSL для локальной разработки
             }

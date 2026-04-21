@@ -10,27 +10,6 @@
                 <span class="logo-text">Каталог конспектов</span>
             </div>
 
-            <div class="avatar-menu" @click.stop="toggleMenu">
-                <div class="avatar">
-                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="56" height="56" rx="28" fill="#2A2348" />
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M36.4003 22.4C36.4003 27.0392 32.6395 30.8 28.0003 30.8C23.3612 30.8 19.6003 27.0392 19.6003 22.4C19.6003 17.7608 23.3612 14 28.0003 14C32.6395 14 36.4003 17.7608 36.4003 22.4ZM33.6003 22.4C33.6003 25.4928 31.0931 28 28.0003 28C24.9075 28 22.4003 25.4928 22.4003 22.4C22.4003 19.3072 24.9075 16.8 28.0003 16.8C31.0931 16.8 33.6003 19.3072 33.6003 22.4Z" fill="#6057FD" />
-                        <path d="M28.0003 35C18.9362 35 11.2133 40.3598 8.27148 47.8689C8.98814 48.5805 9.74308 49.2536 10.5329 49.8849C12.7236 42.9908 19.5957 37.8 28.0003 37.8C36.4049 37.8 43.2771 42.9908 45.4678 49.8849C46.2576 49.2536 47.0126 48.5805 47.7292 47.8689C44.7874 40.3598 37.0645 35 28.0003 35Z" fill="#6057FD" />
-                    </svg>
-                </div>
-                <div v-if="isMenuOpen" class="dropdown-menu">
-                    <template v-if="authStore.isAuthenticated">
-                        <div class="user-name">{{ authStore.user?.fullName }}</div>
-                        <div class="menu-item" @click="goToMyNotes">Мои конспекты</div>
-                        <div class="menu-item" @click="goToAddNote">Добавить конспект</div>
-                        <div class="menu-item logout" @click="handleLogout">Выйти</div>
-                    </template>
-                    <template v-else>
-                        <div class="menu-item" @click="goToLogin">Войти</div>
-                        <div class="menu-item" @click="goToRegister">Зарегистрироваться</div>
-                    </template>
-                </div>
-            </div>
         </div>
 
         <div class="back-button" @click="goBack">
@@ -181,7 +160,7 @@
 </template>
 
 <script setup>
-    import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+    import { ref, reactive, computed, onMounted } from 'vue'
     import { useRouter } from 'vue-router'
     import { useAuthStore } from '@/stores/auth'
     import { useFavoritesStore } from '@/stores/favorites'
@@ -190,8 +169,6 @@
     const router = useRouter()
     const authStore = useAuthStore()
     const favoritesStore = useFavoritesStore()
-
-    const isMenuOpen = ref(false)
 
     const profile = reactive({
         fullName: '',
@@ -226,14 +203,6 @@
     const showConfirmPassword = ref(false)
     const editError = ref('')
 
-    const toggleMenu = () => {
-        isMenuOpen.value = !isMenuOpen.value
-    }
-
-    const closeMenu = () => {
-        isMenuOpen.value = false
-    }
-
     const goToCatalog = () => {
         router.push('/')
     }
@@ -242,29 +211,12 @@
         router.back()
     }
 
-    const goToLogin = () => {
-        router.push('/login')
-        closeMenu()
-    }
-
-    const goToRegister = () => {
-        router.push('/register')
-        closeMenu()
-    }
-
-    const goToMyNotes = () => {
-        router.push('/profile')
-        closeMenu()
-    }
-
     const goToAddNote = () => {
         router.push('/add-note')
-        closeMenu()
     }
 
     const handleLogout = () => {
         authStore.logout()
-        closeMenu()
         router.push('/login')
     }
 
@@ -404,23 +356,12 @@
         }
     }
 
-    const handleClickOutside = (event) => {
-        if (!event.target.closest('.avatar-menu')) {
-            isMenuOpen.value = false
-        }
-    }
-
     onMounted(() => {
-        document.addEventListener('click', handleClickOutside)
         loadProfile()
         loadUniversities()
         loadMyNotes()
         loadFavorites()
         loadDownloadHistory()
-    })
-
-    onUnmounted(() => {
-        document.removeEventListener('click', handleClickOutside)
     })
 </script>
 

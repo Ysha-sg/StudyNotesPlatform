@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using StudyNotesPlatform.Data;
 using StudyNotesPlatform.Models;
+using UglyToad.PdfPig;
 using System.Security.Claims;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace StudyNotesPlatform.Controllers;
 
-// DTO для загрузки конспекта
 public class UploadNoteModel
 {
     public string Title { get; set; } = string.Empty;
@@ -17,20 +20,30 @@ public class UploadNoteModel
     public IFormFile File { get; set; } = null!;
 }
 
-// DTO для модерации
 public class ModerateModel
 {
     public int StatusId { get; set; }
     public string? Comment { get; set; }
 }
 
-// DTO для обновления конспекта
 public class UpdateNoteModel
 {
     public string? Title { get; set; }
     public string? Description { get; set; }
     public int? SubjectId { get; set; }
     public int? TeacherId { get; set; }
+}
+
+public class CreateComplaintModel
+{
+    public string Reason { get; set; } = string.Empty;
+    public string? Comment { get; set; }
+}
+
+public class ResolveComplaintModel
+{
+    public bool ConfirmComplaint { get; set; }
+    public string? Comment { get; set; }
 }
 
 [ApiController]
@@ -41,13 +54,396 @@ public class NotesController : ControllerBase
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _env;
 
+    private const int AutoCheckWordLimit = 1000;
+    private const int MaxTextCharsForCheck = 24_000;
+    private const int MaxBytesForHeuristicExtraction = 2 * 1024 * 1024;
+
+    private static readonly HashSet<string> AllowedUploadExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".pdf"
+    };
+
+    private static readonly string[] ForbiddenKeywordStems =
+    {
+        "ответ",
+        "тест"
+    };
+
+    private static readonly HashSet<string> TextLikeExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".txt",
+        ".md",
+        ".csv",
+        ".json",
+        ".xml",
+        ".html",
+        ".htm",
+        ".rtf",
+        ".log"
+    };
+
+    private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "и", "или", "а", "но", "в", "во", "на", "по", "к", "ко", "из", "за", "от", "до", "для", "с", "со",
+        "о", "об", "про", "у", "не", "это", "как", "что", "чтобы", "при", "под", "над", "без", "же", "ли",
+        "the", "and", "or", "for", "with", "from", "into", "about", "this", "that", "are", "was", "were"
+    };
+
     public NotesController(ApplicationDbContext context, IWebHostEnvironment env)
     {
         _context = context;
         _env = env;
     }
 
-    // GET: api/notes/my - мои конспекты
+    private string GetPrivateUploadsDirectory()
+    {
+        return Path.Combine(_env.ContentRootPath, "uploads");
+    }
+
+    private static string ExtractStoredFileName(string? storedPath)
+    {
+        if (string.IsNullOrWhiteSpace(storedPath))
+        {
+            return string.Empty;
+        }
+
+        return Path.GetFileName(storedPath.Replace('\\', '/'));
+    }
+
+    private string? ResolveNoteFilePath(Note note)
+    {
+        var fileName = ExtractStoredFileName(note.FilePath);
+        var candidates = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(fileName))
+        {
+            candidates.Add(Path.Combine(GetPrivateUploadsDirectory(), fileName));
+
+            if (!string.IsNullOrWhiteSpace(_env.WebRootPath))
+            {
+                candidates.Add(Path.Combine(_env.WebRootPath, "uploads", fileName));
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(note.FilePath))
+        {
+            var relative = note.FilePath.TrimStart('/', '\\')
+                .Replace('/', Path.DirectorySeparatorChar)
+                .Replace('\\', Path.DirectorySeparatorChar);
+            candidates.Add(Path.Combine(_env.ContentRootPath, relative));
+
+            if (!string.IsNullOrWhiteSpace(_env.WebRootPath))
+            {
+                candidates.Add(Path.Combine(_env.WebRootPath, relative));
+            }
+        }
+
+        foreach (var candidate in candidates.Distinct())
+        {
+            if (System.IO.File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<bool> CanUserAccessNoteFileAsync(Note note)
+    {
+        if (User.IsInRole("admin") || User.IsInRole("moderator"))
+        {
+            return true;
+        }
+
+        if (await IsStatusCodeAsync(note.StatusId, "approved"))
+        {
+            return true;
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return userId != null && int.TryParse(userId, out var parsedUserId) && note.UserId == parsedUserId;
+    }
+
+    private async Task<bool> IsStatusCodeAsync(int statusId, string code)
+    {
+        return await _context.NoteStatuses.AnyAsync(s => s.Id == statusId && s.Code == code);
+    }
+
+    private async Task<int?> GetStatusIdAsync(string code)
+    {
+        return await _context.NoteStatuses
+            .Where(s => s.Code == code)
+            .Select(s => (int?)s.Id)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task<int?> GetSystemModeratorIdAsync()
+    {
+        return await (from user in _context.Users
+                      join role in _context.Roles on user.RoleId equals role.Id
+                      where role.Code == "moderator" || role.Code == "admin"
+                      orderby user.Id
+                      select (int?)user.Id).FirstOrDefaultAsync();
+    }
+
+    private static int CountWords(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return 0;
+        }
+
+        return Regex.Matches(text, @"\p{L}+", RegexOptions.CultureInvariant).Count;
+    }
+
+    private static IEnumerable<string> TokenizeWords(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            yield break;
+        }
+
+        foreach (Match match in Regex.Matches(text, @"\p{L}+", RegexOptions.CultureInvariant))
+        {
+            var token = match.Value.ToLowerInvariant();
+            if (token.Length >= 4 && !StopWords.Contains(token))
+            {
+                yield return token;
+            }
+        }
+    }
+
+    private static bool ContainsForbiddenKeyword(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        foreach (var token in TokenizeWords(text))
+        {
+            foreach (var stem in ForbiddenKeywordStems)
+            {
+                if (token.StartsWith(stem, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasMeaningfulText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        return Regex.IsMatch(text, @"\p{L}{3,}", RegexOptions.CultureInvariant);
+    }
+
+    private static string DecodePdfHexPayload(string hexPayload)
+    {
+        if (string.IsNullOrWhiteSpace(hexPayload))
+        {
+            return string.Empty;
+        }
+
+        var sanitized = Regex.Replace(hexPayload, @"\s+", string.Empty);
+        if (sanitized.Length < 4)
+        {
+            return string.Empty;
+        }
+
+        if (sanitized.Length % 2 != 0)
+        {
+            sanitized = sanitized[..^1];
+        }
+
+        var bytes = new byte[sanitized.Length / 2];
+        for (var i = 0; i < bytes.Length; i++)
+        {
+            if (!byte.TryParse(sanitized.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber, null, out var parsed))
+            {
+                return string.Empty;
+            }
+
+            bytes[i] = parsed;
+        }
+
+        var candidates = new List<string>(4);
+        try { candidates.Add(Encoding.BigEndianUnicode.GetString(bytes)); } catch { }
+        try { candidates.Add(Encoding.Unicode.GetString(bytes)); } catch { }
+        try { candidates.Add(Encoding.UTF8.GetString(bytes)); } catch { }
+        try { candidates.Add(Encoding.ASCII.GetString(bytes)); } catch { }
+
+        var best = candidates
+            .Where(HasMeaningfulText)
+            .OrderByDescending(c => Regex.Matches(c, @"\p{L}+", RegexOptions.CultureInvariant).Count)
+            .FirstOrDefault();
+
+        return best ?? string.Empty;
+    }
+
+    private static async Task<bool> HasPdfSignatureAsync(IFormFile file, CancellationToken cancellationToken)
+    {
+        if (file.Length < 5)
+        {
+            return false;
+        }
+
+        await using var stream = file.OpenReadStream();
+        var signature = new byte[5];
+        var read = await stream.ReadAsync(signature.AsMemory(0, signature.Length), cancellationToken);
+        if (read < signature.Length)
+        {
+            return false;
+        }
+
+        return Encoding.ASCII.GetString(signature) == "%PDF-";
+    }
+
+    private static async Task<string> ExtractTextContentAsync(string absolutePath, string extension, CancellationToken cancellationToken)
+    {
+        if (TextLikeExtensions.Contains(extension))
+        {
+            await using var stream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+
+            var buffer = new char[MaxTextCharsForCheck];
+            var readCount = await reader.ReadBlockAsync(buffer, 0, buffer.Length);
+            return new string(buffer, 0, readCount);
+        }
+
+        if (extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                using var document = PdfDocument.Open(absolutePath);
+                var parsedText = new StringBuilder();
+
+                foreach (var page in document.GetPages())
+                {
+                    var pageText = page.Text;
+                    if (!string.IsNullOrWhiteSpace(pageText))
+                    {
+                        parsedText.Append(' ').Append(pageText);
+                    }
+
+                    if (parsedText.Length >= MaxTextCharsForCheck)
+                    {
+                        break;
+                    }
+                }
+
+                var normalized = parsedText.ToString();
+                if (HasMeaningfulText(normalized))
+                {
+                    return normalized.Length > MaxTextCharsForCheck
+                        ? normalized[..MaxTextCharsForCheck]
+                        : normalized;
+                }
+            }
+            catch
+            {
+                // Fallback below
+            }
+
+            var info = new FileInfo(absolutePath);
+            var byteCount = (int)Math.Min(info.Length, MaxBytesForHeuristicExtraction);
+            var bytes = new byte[byteCount];
+
+            await using var stream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var read = await stream.ReadAsync(bytes.AsMemory(0, byteCount), cancellationToken);
+            var raw = Encoding.ASCII.GetString(bytes, 0, read);
+
+            var sb = new StringBuilder();
+            foreach (Match match in Regex.Matches(raw, @"\(([^)]{2,})\)"))
+            {
+                var value = match.Groups[1].Value;
+                if (value.Length > 0)
+                {
+                    sb.Append(' ').Append(value);
+                }
+
+                if (sb.Length >= MaxTextCharsForCheck)
+                {
+                    break;
+                }
+            }
+
+            if (sb.Length < MaxTextCharsForCheck)
+            {
+                foreach (Match match in Regex.Matches(raw, @"<([0-9A-Fa-f\s]{8,})>"))
+                {
+                    var decoded = DecodePdfHexPayload(match.Groups[1].Value);
+                    if (!HasMeaningfulText(decoded))
+                    {
+                        continue;
+                    }
+
+                    sb.Append(' ').Append(decoded);
+                    if (sb.Length >= MaxTextCharsForCheck)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (sb.Length == 0)
+            {
+                foreach (Match match in Regex.Matches(raw, @"\p{L}{2,}", RegexOptions.CultureInvariant))
+                {
+                    sb.Append(' ').Append(match.Value);
+                    if (sb.Length >= MaxTextCharsForCheck)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        return string.Empty;
+    }
+
+    private enum AutoCheckDecision
+    {
+        Approve,
+        Reject,
+        SendToModeration
+    }
+
+    private static AutoCheckDecision EvaluateDescriptionMatch(string? description, string extractedText)
+    {
+        var descriptionTokens = TokenizeWords(description).Distinct().ToHashSet();
+        var contentTokens = TokenizeWords(extractedText).Distinct().ToHashSet();
+
+        if (descriptionTokens.Count < 3 || contentTokens.Count < 10)
+        {
+            return AutoCheckDecision.SendToModeration;
+        }
+
+        var overlapCount = descriptionTokens.Intersect(contentTokens).Count();
+        var overlapRatio = overlapCount / (double)descriptionTokens.Count;
+
+        if (overlapCount >= 3 && overlapRatio >= 0.35)
+        {
+            return AutoCheckDecision.Approve;
+        }
+
+        if (overlapCount <= 1 || overlapRatio < 0.15)
+        {
+            return AutoCheckDecision.Reject;
+        }
+
+        return AutoCheckDecision.SendToModeration;
+    }
+
     [HttpGet("my")]
     public async Task<IActionResult> GetMyNotes()
     {
@@ -73,19 +469,16 @@ public class NotesController : ControllerBase
                 n.AverageRating
             })
             .ToListAsync();
+
         return Ok(notes);
     }
 
-    // GET: api/notes/download-history - история скачиваний
     [HttpGet("download-history")]
     [Authorize]
     public async Task<IActionResult> GetDownloadHistory()
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-        // Получаем конспекты, которые скачал пользователь
-        // (предполагаем, что есть записи в таблице downloads)
-        // Пока возвращаем конспекты пользователя с сортировкой по дате
         var history = await _context.Notes
             .Where(n => n.UserId == userId)
             .Include(n => n.University)
@@ -108,46 +501,144 @@ public class NotesController : ControllerBase
         return Ok(history);
     }
 
-    // POST: api/notes/upload - загрузка конспекта
     [HttpPost("upload")]
     [Authorize(Roles = "student")]
-    public async Task<IActionResult> UploadNote([FromForm] UploadNoteModel model)
+    public async Task<IActionResult> UploadNote([FromForm] UploadNoteModel model, CancellationToken cancellationToken)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null) return Unauthorized();
+        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken);
+        if (user == null)
+        {
+            return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Требуется авторизация", detail: "Пользователь из токена не найден.");
+        }
 
-        var subject = await _context.Subjects.FindAsync(model.SubjectId);
+        var subject = await _context.Subjects.FindAsync(new object[] { model.SubjectId }, cancellationToken);
         if (subject == null)
-            return BadRequest("Предмет не найден");
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Предмет не найден");
+        }
+
         if (subject.UniversityId != user.UniversityId)
-            return BadRequest("Предмет не принадлежит вашему университету");
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Предмет не принадлежит вашему университету");
+        }
 
         if (model.TeacherId.HasValue)
         {
-            var teacher = await _context.Teachers.FindAsync(model.TeacherId.Value);
+            var teacher = await _context.Teachers.FindAsync(new object[] { model.TeacherId.Value }, cancellationToken);
             if (teacher == null)
-                return BadRequest("Преподаватель не найден");
+            {
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Преподаватель не найден");
+            }
+
             if (teacher.UniversityId != user.UniversityId)
-                return BadRequest("Преподаватель не принадлежит вашему университету");
+            {
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Преподаватель не принадлежит вашему университету");
+            }
         }
 
         if (model.File == null || model.File.Length == 0)
-            return BadRequest("Файл не загружен");
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Файл не загружен");
+        }
 
-        var uploadsFolder = Path.Combine(_env.WebRootPath ?? _env.ContentRootPath, "uploads");
+        var pendingStatusId = await GetStatusIdAsync("pending");
+        var approvedStatusId = await GetStatusIdAsync("approved");
+        var rejectedStatusId = await GetStatusIdAsync("rejected");
+
+        if (!pendingStatusId.HasValue || !approvedStatusId.HasValue || !rejectedStatusId.HasValue)
+        {
+            return Problem(statusCode: StatusCodes.Status500InternalServerError, title: "Не настроены системные статусы модерации");
+        }
+
+        var extension = Path.GetExtension(model.File.FileName);
+        if (string.IsNullOrWhiteSpace(extension) || !AllowedUploadExtensions.Contains(extension))
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Формат файла запрещён", detail: "Поддерживается только формат .pdf.");
+        }
+
+        if (!await HasPdfSignatureAsync(model.File, cancellationToken))
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Формат файла запрещён", detail: "Файл должен быть корректным PDF-документом.");
+        }
+
+        if (ContainsForbiddenKeyword(model.Title) || ContainsForbiddenKeyword(model.Description) || ContainsForbiddenKeyword(model.File.FileName))
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Обнаружены запрещённые ключевые слова", detail: "Конспект содержит запрещённые слова: \"ответы\" или \"тест\".");
+        }
+
+        var uploadsFolder = GetPrivateUploadsDirectory();
         if (!Directory.Exists(uploadsFolder))
+        {
             Directory.CreateDirectory(uploadsFolder);
+        }
 
         var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(model.File.FileName)}";
-        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+        var absoluteFilePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        await using (var stream = new FileStream(absoluteFilePath, FileMode.Create))
         {
-            await model.File.CopyToAsync(stream);
+            await model.File.CopyToAsync(stream, cancellationToken);
+        }
+
+        string extractedText;
+        try
+        {
+            extractedText = await ExtractTextContentAsync(absoluteFilePath, extension, cancellationToken);
+        }
+        catch
+        {
+            extractedText = string.Empty;
+        }
+
+        if (ContainsForbiddenKeyword(extractedText))
+        {
+            System.IO.File.Delete(absoluteFilePath);
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Обнаружены запрещённые ключевые слова", detail: "В тексте файла найдены запрещённые слова: \"ответы\" или \"тест\".");
         }
 
         var relativePath = $"/uploads/{uniqueFileName}";
+        var wordsCount = CountWords(extractedText);
+        var autoDecision = AutoCheckDecision.SendToModeration;
+        var systemComment = "Файл отправлен модератору на ручную проверку.";
+
+        if (wordsCount > 0 && wordsCount <= AutoCheckWordLimit)
+        {
+            autoDecision = EvaluateDescriptionMatch(model.Description, extractedText);
+            if (autoDecision == AutoCheckDecision.Approve)
+            {
+                systemComment = "Автопроверка: описание соответствует содержанию.";
+            }
+            else if (autoDecision == AutoCheckDecision.Reject)
+            {
+                systemComment = "Автопроверка: описание не соответствует содержанию.";
+            }
+            else
+            {
+                systemComment = "Автопроверка: недостаточно данных для решения, отправлено модератору.";
+            }
+        }
+        else if (wordsCount > AutoCheckWordLimit)
+        {
+            systemComment = $"Файл содержит больше {AutoCheckWordLimit} слов и отправлен модератору.";
+        }
+
+        var statusId = pendingStatusId.Value;
+        var actionCode = "sent_to_manual_moderation";
+        var responseMessage = "Конспект успешно загружен и отправлен на модерацию";
+
+        if (autoDecision == AutoCheckDecision.Approve)
+        {
+            statusId = approvedStatusId.Value;
+            actionCode = "auto_approved";
+            responseMessage = "Конспект успешно загружен и автоматически одобрен";
+        }
+        else if (autoDecision == AutoCheckDecision.Reject)
+        {
+            statusId = rejectedStatusId.Value;
+            actionCode = "auto_rejected";
+            responseMessage = "Конспект загружен, но автоматически отклонён из-за несоответствия описанию";
+        }
 
         var note = new Note
         {
@@ -155,7 +646,7 @@ public class NotesController : ControllerBase
             UniversityId = user.UniversityId,
             SubjectId = model.SubjectId,
             TeacherId = model.TeacherId,
-            StatusId = 1,
+            StatusId = statusId,
             Title = model.Title,
             Description = model.Description,
             FilePath = relativePath,
@@ -165,57 +656,145 @@ public class NotesController : ControllerBase
         };
 
         _context.Notes.Add(note);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
-        return Ok(new
+        var systemModeratorId = await GetSystemModeratorIdAsync();
+        if (systemModeratorId.HasValue)
+        {
+            _context.ModerationLogs.Add(new ModerationLog
+            {
+                NoteId = note.Id,
+                ModeratorId = systemModeratorId.Value,
+                Action = actionCode,
+                Comment = systemComment,
+                CreatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        return CreatedAtAction(nameof(GetNote), new { id = note.Id }, new
         {
             note.Id,
             note.Title,
             note.UploadedAt,
-            Message = "Конспект успешно загружен и отправлен на модерацию"
+            StatusId = note.StatusId,
+            Message = responseMessage
         });
     }
 
-    // POST: api/notes/moderate/{noteId} - модерация конспекта (только админ)
-    [HttpPost("moderate/{noteId}")]
-    [Authorize(Roles = "admin")]
+    [HttpPost("moderate/{noteId:int}")]
+    [Authorize(Roles = "admin,moderator")]
     public async Task<IActionResult> ModerateNote(int noteId, [FromBody] ModerateModel model)
     {
         var note = await _context.Notes.FindAsync(noteId);
-        if (note == null) return NotFound();
+        if (note == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
 
         var newStatus = await _context.NoteStatuses.FindAsync(model.StatusId);
-        if (newStatus == null) return BadRequest("Статус не существует");
+        if (newStatus == null)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Статус не существует");
+        }
 
         note.StatusId = model.StatusId;
         await _context.SaveChangesAsync();
 
         var moderatorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        var log = new ModerationLog
+        _context.ModerationLogs.Add(new ModerationLog
         {
             NoteId = noteId,
             ModeratorId = moderatorId,
             Action = newStatus.Code,
             Comment = model.Comment,
             CreatedAt = DateTime.UtcNow
-        };
-        _context.ModerationLogs.Add(log);
+        });
         await _context.SaveChangesAsync();
 
         return Ok(new { message = $"Статус конспекта изменён на {newStatus.Name}" });
     }
 
-    // GET: api/notes/all - все конспекты (только админ)
+    [HttpGet("moderation/pending")]
+    [Authorize(Roles = "admin,moderator")]
+    public async Task<IActionResult> GetModerationQueue()
+    {
+        var pendingStatusId = await GetStatusIdAsync("pending");
+        if (!pendingStatusId.HasValue)
+        {
+            return Problem(statusCode: StatusCodes.Status500InternalServerError, title: "Не найден статус pending");
+        }
+
+        var queue = await _context.Notes
+            .Where(n => n.StatusId == pendingStatusId.Value)
+            .Include(n => n.Subject)
+            .Include(n => n.University)
+            .Include(n => n.User)
+            .OrderByDescending(n => n.UploadedAt)
+            .Select(n => new
+            {
+                n.Id,
+                n.Title,
+                Subject = n.Subject != null ? n.Subject.Name : "",
+                University = n.University != null ? n.University.Name : "",
+                Author = n.User != null ? n.User.FullName : "",
+                n.UploadedAt
+            })
+            .ToListAsync();
+
+        return Ok(queue);
+    }
+
+    [HttpGet("moderation/history")]
+    [Authorize(Roles = "admin,moderator")]
+    public async Task<IActionResult> GetModerationHistory()
+    {
+        var historyActions = new[] { "approved", "rejected", "auto_approved", "auto_rejected" };
+
+        var history = await _context.ModerationLogs
+            .Where(l => historyActions.Contains(l.Action))
+            .Include(l => l.Note)
+                .ThenInclude(n => n!.Subject)
+            .Include(l => l.Note)
+                .ThenInclude(n => n!.University)
+            .Include(l => l.Note)
+                .ThenInclude(n => n!.User)
+            .Include(l => l.Moderator)
+            .OrderByDescending(l => l.CreatedAt)
+            .Select(l => new
+            {
+                l.Id,
+                l.NoteId,
+                NoteTitle = l.Note != null ? l.Note.Title : "",
+                Subject = l.Note != null && l.Note.Subject != null ? l.Note.Subject.Name : "",
+                University = l.Note != null && l.Note.University != null ? l.Note.University.Name : "",
+                Author = l.Note != null && l.Note.User != null ? l.Note.User.FullName : "",
+                UploadedAt = l.Note != null ? l.Note.UploadedAt : (DateTime?)null,
+                ResultCode = l.Action == "approved" || l.Action == "auto_approved" ? "approved" : "rejected",
+                l.Action,
+                l.Comment,
+                l.CreatedAt,
+                Moderator = l.Moderator != null ? l.Moderator.FullName : ""
+            })
+            .ToListAsync();
+
+        return Ok(history);
+    }
+
     [HttpGet("all")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,moderator")]
     public async Task<IActionResult> GetAllNotes([FromQuery] int? statusId = null)
     {
         var query = _context.Notes
             .Include(n => n.User)
             .Include(n => n.Status)
             .AsQueryable();
+
         if (statusId.HasValue)
+        {
             query = query.Where(n => n.StatusId == statusId.Value);
+        }
+
         var notes = await query
             .OrderByDescending(n => n.UploadedAt)
             .Select(n => new
@@ -223,16 +802,16 @@ public class NotesController : ControllerBase
                 n.Id,
                 n.Title,
                 n.UploadedAt,
-                UserEmail = n.User!.Email,
-                Status = n.Status!.Name,
+                UserEmail = n.User != null ? n.User.Email : "",
+                Status = n.Status != null ? n.Status.Name : "",
                 n.DownloadsCount,
                 n.AverageRating
             })
             .ToListAsync();
+
         return Ok(notes);
     }
 
-    // GET: api/notes/statuses - список статусов
     [HttpGet("statuses")]
     [AllowAnonymous]
     public async Task<IActionResult> GetStatuses()
@@ -243,7 +822,6 @@ public class NotesController : ControllerBase
         return Ok(statuses);
     }
 
-    // GET: api/notes - главный каталог (только одобренные конспекты)
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetNotes(
@@ -256,7 +834,8 @@ public class NotesController : ControllerBase
             .Include(n => n.University)
             .Include(n => n.Subject)
             .Include(n => n.Teacher)
-            .Where(n => n.StatusId == 2);
+            .Include(n => n.Status)
+            .Where(n => n.Status != null && n.Status.Code == "approved");
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -295,8 +874,7 @@ public class NotesController : ControllerBase
         return Ok(notes);
     }
 
-    // GET: api/notes/{id} - получить один конспект
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetNote(int id)
     {
@@ -308,13 +886,28 @@ public class NotesController : ControllerBase
             .FirstOrDefaultAsync(n => n.Id == id);
 
         if (note == null)
-            return NotFound(new { message = "Конспект не найден" });
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
+
+        var isApproved = await IsStatusCodeAsync(note.StatusId, "approved");
+        if (!isApproved)
+        {
+            var isAuthenticated = User?.Identity?.IsAuthenticated == true;
+            if (!isAuthenticated || !await CanUserAccessNoteFileAsync(note))
+            {
+                return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+            }
+        }
 
         return Ok(new
         {
             note.Id,
             note.Title,
             note.Description,
+            note.SubjectId,
+            note.TeacherId,
+            note.UniversityId,
             Subject = note.Subject?.Name ?? "",
             Teacher = note.Teacher?.FullName ?? "",
             University = note.University?.Name ?? "",
@@ -326,32 +919,337 @@ public class NotesController : ControllerBase
         });
     }
 
-    // PUT: api/notes/{id} - обновление конспекта
-    [HttpPut("{id}")]
+    [HttpGet("{id:int}/file")]
+    [Authorize]
+    public async Task<IActionResult> ViewNoteFile(int id)
+    {
+        var note = await _context.Notes.FirstOrDefaultAsync(n => n.Id == id);
+        if (note == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
+
+        if (!await CanUserAccessNoteFileAsync(note))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, title: "Доступ запрещён");
+        }
+
+        var resolvedPath = ResolveNoteFilePath(note);
+        if (resolvedPath == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Файл конспекта не найден");
+        }
+
+        var provider = new FileExtensionContentTypeProvider();
+        if (!provider.TryGetContentType(resolvedPath, out var contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+
+        var stream = new FileStream(resolvedPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return File(stream, contentType, enableRangeProcessing: true);
+    }
+
+    [HttpGet("{id:int}/download")]
+    [Authorize]
+    public async Task<IActionResult> DownloadNoteFile(int id)
+    {
+        var note = await _context.Notes.FirstOrDefaultAsync(n => n.Id == id);
+        if (note == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
+
+        if (!await CanUserAccessNoteFileAsync(note))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, title: "Доступ запрещён");
+        }
+
+        var resolvedPath = ResolveNoteFilePath(note);
+        if (resolvedPath == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Файл конспекта не найден");
+        }
+
+        note.DownloadsCount += 1;
+        await _context.SaveChangesAsync();
+
+        var provider = new FileExtensionContentTypeProvider();
+        if (!provider.TryGetContentType(resolvedPath, out var contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+
+        var downloadName = ExtractStoredFileName(note.FilePath);
+        if (string.IsNullOrWhiteSpace(downloadName))
+        {
+            downloadName = $"note-{note.Id}.pdf";
+        }
+
+        var stream = new FileStream(resolvedPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return File(stream, contentType, downloadName);
+    }
+
+    [HttpPost("{id:int}/complaints")]
+    [Authorize]
+    public async Task<IActionResult> CreateComplaint(int id, [FromBody] CreateComplaintModel model)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var note = await _context.Notes.FindAsync(id);
+        if (note == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
+
+        var isApproved = await IsStatusCodeAsync(note.StatusId, "approved");
+        if (!isApproved && note.UserId != userId && !User.IsInRole("admin") && !User.IsInRole("moderator"))
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
+
+        if (note.UserId == userId)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Нельзя отправить жалобу на собственный конспект");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Reason))
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Укажите причину жалобы");
+        }
+
+        var alreadyExists = await _context.Complaints
+            .AnyAsync(c => c.NoteId == id && c.ReporterId == userId && c.Status == "open");
+        if (alreadyExists)
+        {
+            return Problem(statusCode: StatusCodes.Status409Conflict, title: "Жалоба уже отправлена", detail: "У вас уже есть открытая жалоба на этот конспект.");
+        }
+
+        var complaint = new Complaint
+        {
+            NoteId = id,
+            ReporterId = userId,
+            Reason = model.Reason.Trim(),
+            Comment = string.IsNullOrWhiteSpace(model.Comment) ? null : model.Comment.Trim(),
+            Status = "open",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Complaints.Add(complaint);
+        await _context.SaveChangesAsync();
+
+        return Created($"/api/notes/complaints/{complaint.Id}", new
+        {
+            complaint.Id,
+            complaint.NoteId,
+            complaint.Reason,
+            complaint.Status,
+            complaint.CreatedAt,
+            Message = "Жалоба отправлена модератору"
+        });
+    }
+
+    [HttpGet("complaints/my")]
+    [Authorize]
+    public async Task<IActionResult> GetMyComplaints()
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        var complaints = await _context.Complaints
+            .Where(c => c.ReporterId == userId)
+            .Include(c => c.Note)
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => new
+            {
+                c.Id,
+                c.NoteId,
+                NoteTitle = c.Note != null ? c.Note.Title : "",
+                c.Reason,
+                c.Comment,
+                c.Status,
+                c.CreatedAt,
+                c.ResolvedAt
+            })
+            .ToListAsync();
+
+        return Ok(complaints);
+    }
+
+    [HttpGet("complaints")]
+    [Authorize(Roles = "admin,moderator")]
+    public async Task<IActionResult> GetComplaints([FromQuery] string? status = "open")
+    {
+        var query = _context.Complaints
+            .Include(c => c.Note)
+                .ThenInclude(n => n!.User)
+            .Include(c => c.Reporter)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(c => c.Status == status);
+        }
+
+        var complaints = await query
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => new
+            {
+                c.Id,
+                c.NoteId,
+                NoteTitle = c.Note != null ? c.Note.Title : "",
+                Author = c.Note != null && c.Note.User != null ? c.Note.User.FullName : "",
+                Reporter = c.Reporter != null ? c.Reporter.FullName : "",
+                c.Reason,
+                c.Comment,
+                c.Status,
+                c.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(complaints);
+    }
+
+    [HttpGet("complaints/{complaintId:int}")]
+    [Authorize(Roles = "admin,moderator")]
+    public async Task<IActionResult> GetComplaintDetails(int complaintId)
+    {
+        var complaint = await _context.Complaints
+            .Include(c => c.Note)
+                .ThenInclude(n => n!.User)
+            .Include(c => c.Reporter)
+            .Include(c => c.ResolvedBy)
+            .FirstOrDefaultAsync(c => c.Id == complaintId);
+
+        if (complaint == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Жалоба не найдена");
+        }
+
+        return Ok(new
+        {
+            complaint.Id,
+            complaint.NoteId,
+            NoteTitle = complaint.Note != null ? complaint.Note.Title : "",
+            NoteDescription = complaint.Note != null ? complaint.Note.Description : "",
+            complaint.Reason,
+            complaint.Comment,
+            complaint.Status,
+            complaint.CreatedAt,
+            complaint.ResolvedAt,
+            complaint.ResolutionComment,
+            Reporter = complaint.Reporter != null ? complaint.Reporter.FullName : "",
+            Author = complaint.Note != null && complaint.Note.User != null ? complaint.Note.User.FullName : "",
+            ResolvedBy = complaint.ResolvedBy != null ? complaint.ResolvedBy.FullName : ""
+        });
+    }
+
+    [HttpPost("complaints/{complaintId:int}/resolve")]
+    [Authorize(Roles = "admin,moderator")]
+    public async Task<IActionResult> ResolveComplaint(int complaintId, [FromBody] ResolveComplaintModel model)
+    {
+        var complaint = await _context.Complaints
+            .Include(c => c.Note)
+            .FirstOrDefaultAsync(c => c.Id == complaintId);
+
+        if (complaint == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Жалоба не найдена");
+        }
+
+        if (complaint.Status != "open")
+        {
+            return Problem(statusCode: StatusCodes.Status409Conflict, title: "Жалоба уже обработана");
+        }
+
+        var moderatorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        complaint.ResolvedAt = DateTime.UtcNow;
+        complaint.ResolvedById = moderatorId;
+        complaint.ResolutionComment = string.IsNullOrWhiteSpace(model.Comment) ? null : model.Comment.Trim();
+
+        if (model.ConfirmComplaint)
+        {
+            var pendingStatusId = await GetStatusIdAsync("pending");
+            if (!pendingStatusId.HasValue)
+            {
+                return Problem(statusCode: StatusCodes.Status500InternalServerError, title: "Не найден статус pending");
+            }
+
+            complaint.Status = "confirmed";
+            if (complaint.Note != null)
+            {
+                complaint.Note.StatusId = pendingStatusId.Value;
+            }
+
+            _context.ModerationLogs.Add(new ModerationLog
+            {
+                NoteId = complaint.NoteId,
+                ModeratorId = moderatorId,
+                Action = "complaint_confirmed",
+                Comment = complaint.ResolutionComment ?? "Жалоба подтверждена. Конспект отправлен на повторную проверку.",
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            complaint.Status = "dismissed";
+            _context.ModerationLogs.Add(new ModerationLog
+            {
+                NoteId = complaint.NoteId,
+                ModeratorId = moderatorId,
+                Action = "complaint_dismissed",
+                Comment = complaint.ResolutionComment ?? "Жалоба отклонена.",
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            complaint.Id,
+            complaint.Status,
+            complaint.ResolvedAt,
+            Message = model.ConfirmComplaint
+                ? "Жалоба подтверждена, конспект отправлен на повторную проверку"
+                : "Жалоба отклонена"
+        });
+    }
+
+    [HttpPut("{id:int}")]
     [Authorize(Roles = "student,admin")]
     public async Task<IActionResult> UpdateNote(int id, [FromBody] UpdateNoteModel model)
     {
         var note = await _context.Notes.FindAsync(id);
         if (note == null)
-            return NotFound(new { message = "Конспект не найден" });
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
 
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
         if (note.UserId != userId && userRole != "admin")
-            return Forbid("Вы можете редактировать только свои конспекты");
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, title: "Доступ запрещён", detail: "Вы можете редактировать только свои конспекты.");
+        }
 
         if (!string.IsNullOrWhiteSpace(model.Title))
+        {
             note.Title = model.Title;
+        }
 
         if (model.Description != null)
+        {
             note.Description = model.Description;
+        }
 
         if (model.SubjectId.HasValue)
         {
             var subject = await _context.Subjects.FindAsync(model.SubjectId.Value);
             if (subject == null)
-                return BadRequest(new { message = "Предмет не найден" });
+            {
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Предмет не найден");
+            }
+
             note.SubjectId = model.SubjectId.Value;
         }
 
@@ -359,13 +1257,20 @@ public class NotesController : ControllerBase
         {
             var teacher = await _context.Teachers.FindAsync(model.TeacherId.Value);
             if (teacher == null)
-                return BadRequest(new { message = "Преподаватель не найден" });
+            {
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Преподаватель не найден");
+            }
+
             note.TeacherId = model.TeacherId.Value;
         }
 
-        if (note.StatusId == 2)
+        if (await IsStatusCodeAsync(note.StatusId, "approved"))
         {
-            note.StatusId = 1;
+            var pendingStatusId = await GetStatusIdAsync("pending");
+            if (pendingStatusId.HasValue)
+            {
+                note.StatusId = pendingStatusId.Value;
+            }
         }
 
         await _context.SaveChangesAsync();
@@ -379,26 +1284,28 @@ public class NotesController : ControllerBase
         });
     }
 
-    // DELETE: api/notes/{id} - удаление конспекта
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     [Authorize(Roles = "student,admin")]
     public async Task<IActionResult> DeleteNote(int id)
     {
         var note = await _context.Notes.FindAsync(id);
         if (note == null)
-            return NotFound(new { message = "Конспект не найден" });
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
 
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
         if (note.UserId != userId && userRole != "admin")
-            return Forbid("Вы можете удалять только свои конспекты");
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, title: "Доступ запрещён", detail: "Вы можете удалять только свои конспекты.");
+        }
 
         if (!string.IsNullOrEmpty(note.FilePath))
         {
-            var filePath = Path.Combine(_env.WebRootPath ?? _env.ContentRootPath,
-                note.FilePath.TrimStart('/'));
-            if (System.IO.File.Exists(filePath))
+            var filePath = ResolveNoteFilePath(note);
+            if (!string.IsNullOrWhiteSpace(filePath) && System.IO.File.Exists(filePath))
             {
                 System.IO.File.Delete(filePath);
             }
@@ -410,16 +1317,20 @@ public class NotesController : ControllerBase
         return Ok(new { message = "Конспект успешно удалён" });
     }
 
-    // POST: api/notes/{id}/favorite - добавить/удалить из избранного
-    [HttpPost("{id}/favorite")]
+    [HttpPost("{id:int}/favorite")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ToggleFavorite(int id)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
         var note = await _context.Notes.FindAsync(id);
         if (note == null)
-            return NotFound(new { message = "Конспект не найден" });
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден");
+        }
 
         var existingFavorite = await _context.Favorites
             .FirstOrDefaultAsync(f => f.UserId == userId && f.NoteId == id);
@@ -430,21 +1341,41 @@ public class NotesController : ControllerBase
             await _context.SaveChangesAsync();
             return Ok(new { isFavorite = false, message = "Удалено из избранного" });
         }
-        else
+
+        _context.Favorites.Add(new Favorite
         {
-            var favorite = new Favorite
-            {
-                UserId = userId,
-                NoteId = id,
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.Favorites.Add(favorite);
-            await _context.SaveChangesAsync();
-            return Ok(new { isFavorite = true, message = "Добавлено в избранное" });
-        }
+            UserId = userId,
+            NoteId = id,
+            CreatedAt = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
+
+        return Created($"/api/notes/{id}/favorite", new { isFavorite = true, message = "Добавлено в избранное" });
     }
 
-    // GET: api/notes/favorites - получить избранные конспекты
+    [HttpDelete("{id:int}/favorite")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveFavorite(int id)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        var existingFavorite = await _context.Favorites
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.NoteId == id);
+
+        if (existingFavorite == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Конспект не найден в избранном");
+        }
+
+        _context.Favorites.Remove(existingFavorite);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { isFavorite = false, message = "Удалено из избранного" });
+    }
+
     [HttpGet("favorites")]
     [Authorize]
     public async Task<IActionResult> GetFavorites()
@@ -453,17 +1384,18 @@ public class NotesController : ControllerBase
 
         var favorites = await _context.Favorites
             .Where(f => f.UserId == userId)
-            .Include(f => f.Note)
+            .Include(f => f.Note!)
                 .ThenInclude(n => n.University)
-            .Include(f => f.Note)
+            .Include(f => f.Note!)
                 .ThenInclude(n => n.Subject)
-            .Include(f => f.Note)
+            .Include(f => f.Note!)
                 .ThenInclude(n => n.Teacher)
-            .Include(f => f.Note)
+            .Include(f => f.Note!)
                 .ThenInclude(n => n.Status)
+            .Where(f => f.Note != null)
             .Select(f => new
             {
-                f.Note.Id,
+                f.Note!.Id,
                 f.Note.Title,
                 Subject = f.Note.Subject != null ? f.Note.Subject.Name : "",
                 Teacher = f.Note.Teacher != null ? f.Note.Teacher.FullName : "",

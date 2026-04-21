@@ -1,0 +1,17 @@
+# Build artifacts
+bin/
+obj/
+.vs/
+
+# Runtime uploads and temp folders
+uploads/
+build_tmp_*/
+
+# Local logs and ad-hoc test artifacts
+*.out
+*.err
+artifacts/test-logs/
+
+# Frontend local logs
+vue-frontend/*.out
+vue-frontend/*.err

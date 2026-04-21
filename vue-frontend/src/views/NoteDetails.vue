@@ -5,7 +5,7 @@
             <div class="logo-area" @click="goToCatalog">
                 <div class="logo-icon">
                     <svg width="55" height="50" viewBox="0 0 69 69" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M34.5 20.125C34.5 17.075 33.2884 14.1499 31.1317 11.9933C28.9751 9.8366 26.05 8.625 23 8.625H5.75V51.75H25.875C28.1625 51.75 30.3563 52.6587 31.9738 54.2762C33.5913 55.8937 34.5 58.0875 34.5 60.375M34.5 20.125V60.375M34.5 20.125C34.5 17.075 35.7116 14.1499 37.8683 11.9933C40.0249 9.8366 42.95 8.625 46 8.625H63.25V51.75H43.125C40.8375 51.75 38.6437 52.6587 37.0262 54.2762C35.4087 55.8937 34.5 58.0875 34.5 60.375" stroke="#8B7FFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M34.5 20.125C34.5 17.075 33.2884 14.1499 31.1317 11.9933C28.9751 9.8366 26.05 8.625 23 8.625H5.75V51.75H25.875C28.1625 51.75 30.3563 52.6587 31.9738 54.2762C33.5913 55.8937 34.5 58.0875 34.5 60.375M34.5 20.125V60.375M34.5 20.125C34.5 17.075 35.7116 14.1499 37.8683 11.9933C40.0249 9.8366 42.95 8.625 46 8.625H63.25V51.75H43.125C40.8375 51.75 38.6437 52.6587 37.0262 54.2762C35.4087 55.8937 34.5 58.0875 34.5 60.375" stroke="#6C63FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
                 <span class="logo-text">Каталог конспектов</span>
@@ -79,8 +79,17 @@
                             <div class="file-name">{{ getFileName(note.filePath) }}</div>
                             <div class="file-type">PDF файл</div>
                         </div>
-                        <button class="view-file-btn" @click="viewFile">Посмотреть файл</button>
-                        <button class="download-file-btn" @click="downloadFile">Скачать конспект</button>
+                        <button class="view-file-btn"
+                                @click="viewFile">
+                            Посмотреть файл
+                        </button>
+                        <button class="download-file-btn"
+                                @click="downloadFile">
+                            Скачать конспект
+                        </button>
+                        <p v-if="!authStore.isAuthenticated" class="file-auth-hint">
+                            Для просмотра и скачивания войдите в аккаунт
+                        </p>
                     </div>
                 </div>
             </div>
@@ -285,18 +294,99 @@
         return filePath.split('/').pop()
     }
 
-    const viewFile = () => {
-        if (note.value.filePath) {
-            window.open(note.value.filePath, '_blank')
+    const getDownloadFileName = (fallbackName, contentDisposition) => {
+        if (!contentDisposition) return fallbackName
+
+        const utfMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)
+        if (utfMatch && utfMatch[1]) {
+            return decodeURIComponent(utfMatch[1])
+        }
+
+        const asciiMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i)
+        if (asciiMatch && asciiMatch[1]) {
+            return asciiMatch[1]
+        }
+
+        return fallbackName
+    }
+
+    const redirectToLogin = () => {
+        router.push({
+            path: '/login',
+            query: {
+                redirect: route.fullPath
+            }
+        })
+    }
+
+    const viewFile = async () => {
+        if (!note.value.id) return
+        if (!authStore.isAuthenticated) {
+            redirectToLogin()
+            return
+        }
+
+        const previewWindow = window.open('', '_blank', 'noopener')
+        if (!previewWindow) {
+            alert('Разрешите всплывающие окна в браузере, чтобы открыть файл')
+            return
+        }
+
+        try {
+            const response = await api.get(`/notes/${note.value.id}/file`, {
+                responseType: 'blob'
+            })
+
+            const blobUrl = URL.createObjectURL(response.data)
+            previewWindow.location.href = blobUrl
+
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl)
+            }, 60_000)
+        } catch (error) {
+            previewWindow.close()
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                redirectToLogin()
+                return
+            }
+            console.error('Ошибка просмотра файла:', error)
+            alert('Не удалось открыть файл')
         }
     }
 
-    const downloadFile = () => {
-        if (note.value.filePath) {
+    const downloadFile = async () => {
+        if (!note.value.id) return
+        if (!authStore.isAuthenticated) {
+            redirectToLogin()
+            return
+        }
+
+        try {
+            const response = await api.get(`/notes/${note.value.id}/download`, {
+                responseType: 'blob'
+            })
+
+            const fallbackName = getFileName(note.value.filePath) || `note-${note.value.id}.pdf`
+            const downloadName = getDownloadFileName(
+                fallbackName,
+                response.headers['content-disposition']
+            )
+
+            const blobUrl = URL.createObjectURL(response.data)
             const link = document.createElement('a')
-            link.href = note.value.filePath
-            link.download = getFileName(note.value.filePath)
+            link.href = blobUrl
+            link.download = downloadName
+            document.body.appendChild(link)
             link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(blobUrl)
+        } catch (error) {
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                redirectToLogin()
+                return
+            }
+            console.error('Ошибка скачивания файла:', error)
+            alert('Не удалось скачать файл')
         }
     }
 
@@ -373,8 +463,10 @@
 <style scoped>
     .note-details-page {
         min-height: 100vh;
-        background: #0A0A0F;
+        background: #0F0F14;
         padding: 32px 80px;
+        max-width: 1440px;
+        margin: 0 auto;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
@@ -467,6 +559,16 @@
         cursor: pointer;
         margin-bottom: 24px;
         width: 49px;
+        transition: transform 0.2s;
+    }
+
+    .back-button:hover {
+        transform: translateX(-2px);
+    }
+
+    .back-button:hover circle,
+    .back-button:hover polyline {
+        stroke: #6C63FF;
     }
 
     .content {
@@ -546,6 +648,7 @@
         border-radius: 16px;
         padding: 24px;
         margin-bottom: 32px;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
         .description-block h3 {
@@ -568,15 +671,24 @@
         margin-bottom: 16px;
     }
 
-    .file-card {
+    .file-block {
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 16px;
+        padding: 24px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .file-card {
+        background: #0F0F14;
+        border: 1px solid #2A2A35;
+        border-radius: 12px;
         padding: 24px;
         display: flex;
         align-items: center;
         gap: 24px;
         flex-wrap: wrap;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .file-icon-large {
@@ -608,17 +720,19 @@
     }
 
     .view-file-btn, .download-file-btn {
+        min-width: 260px;
+        height: 56px;
         padding: 14px 28px;
         border-radius: 14px;
         font-size: 20px;
         font-weight: 700;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.2s, border-color 0.2s, box-shadow 0.2s;
     }
 
     .view-file-btn {
         background: #6C63FF;
-        border: none;
+        border: 1px solid #6C63FF;
         color: #FFFFFF;
     }
 
@@ -629,7 +743,7 @@
 
     .download-file-btn {
         background: #6C63FF;
-        border: none;
+        border: 1px solid #6C63FF;
         color: #FFFFFF;
         display: flex;
         align-items: center;
@@ -649,12 +763,21 @@
             transform: translateY(-2px);
         }
 
+    .file-auth-hint {
+        width: 100%;
+        margin-top: 6px;
+        color: #A0A0B0;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
     .rating-block {
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 16px;
         padding: 24px;
         margin-bottom: 24px;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .rating-header {
@@ -714,9 +837,14 @@
     }
 
     .complaint-block {
+        background: #1A1A22;
+        border: 1px solid #2A2A35;
+        border-radius: 16px;
+        padding: 24px;
         display: flex;
         flex-direction: column;
         gap: 16px;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .complaint-label {
@@ -735,13 +863,13 @@
 
     .complaint-label span {
         font-size: 20px;
-        font-weight: 500;
+        font-weight: 700;
         color: #FFFFFF;
     }
 
     .report-btn {
         background: #6C63FF;
-        border: none;
+        border: 1px solid #6C63FF;
         border-radius: 14px;
         padding: 14px;
         font-size: 20px;
@@ -838,6 +966,7 @@
         cursor: pointer;
         color: #FFFFFF;
         font-size: 20px;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .chevron-down {
@@ -887,6 +1016,7 @@
         font-family: 'Inter', sans-serif;
         resize: vertical;
         min-height: 154px;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
         textarea::placeholder {
@@ -911,12 +1041,12 @@
         font-size: 24px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.2s, border-color 0.2s, box-shadow 0.2s;
     }
 
     .cancel-btn {
         background: #0F0F14;
-        border: 1px solid #151516;
+        border: 1px solid #2A2A35;
         color: #FFFFFF;
     }
 
@@ -931,6 +1061,21 @@
             box-shadow: 0px 8px 16px rgba(108, 99, 255, 0.45);
             transform: translateY(-2px);
         }
+
+    .description-block:hover,
+    .file-block:hover,
+    .file-card:hover,
+    .rating-block:hover,
+    .complaint-block:hover,
+    .select-trigger:hover,
+    textarea:hover,
+    .cancel-btn:hover,
+    .report-btn:hover,
+    .view-file-btn:hover,
+    .download-file-btn:hover {
+        border-color: #6C63FF;
+        box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.3);
+    }
 
     .notification {
         position: fixed;

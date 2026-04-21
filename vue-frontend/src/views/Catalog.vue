@@ -58,14 +58,17 @@
                 </select>
             </div>
             <div class="filter-item">
-                <input type="text" v-model="filters.teacher" placeholder="Все преподаватели" />
+                <select v-model="filters.teacher">
+                    <option value="">Все преподаватели</option>
+                    <option v-for="teacher in allTeachers" :key="teacher" :value="teacher">{{ teacher }}</option>
+                </select>
             </div>
         </div>
 
-        <div class="results-count">Показано {{ filteredNotes.length }} результатов</div>
+        <div class="results-count">Показано {{ filteredNotes.length }} {{ resultsWordForm(filteredNotes.length) }}</div>
 
         <div class="notes-grid">
-            <div v-for="note in filteredNotes" :key="note.id" class="note-card">
+            <div v-for="note in paginatedNotes" :key="note.id" class="note-card">
                 <div class="card-icon">
                     <div class="file-icon"></div>
                 </div>
@@ -90,11 +93,29 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="totalPages > 1" class="pagination">
+            <button class="page-btn nav-btn" :disabled="currentPage === 1" @click="goToPrevPage">
+                Назад
+            </button>
+
+            <button v-for="page in totalPages"
+                    :key="page"
+                    class="page-btn"
+                    :class="{ active: page === currentPage }"
+                    @click="goToPage(page)">
+                {{ page }}
+            </button>
+
+            <button class="page-btn nav-btn" :disabled="currentPage === totalPages" @click="goToNextPage">
+                Вперёд
+            </button>
+        </div>
     </div>
 </template>
 
 <script setup>
-    import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+    import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
     import { useRouter } from 'vue-router'
     import { useAuthStore } from '@/stores/auth'
     import { useFavoritesStore } from '@/stores/favorites'
@@ -115,6 +136,8 @@
     const universities = ref([])
     const subjects = ref([])
     const allTeachers = ref([])
+    const currentPage = ref(1)
+    const NOTES_PER_PAGE = 6
 
     // Конспекты загружаем из API
     const notes = ref([])
@@ -126,9 +149,18 @@
                 note.subject.toLowerCase().includes(searchQuery.value.toLowerCase())
             const matchUniversity = !filters.university || note.university === filters.university
             const matchSubject = !filters.subject || note.subject === filters.subject
-            const matchTeacher = !filters.teacher || note.teacher.toLowerCase().includes(filters.teacher.toLowerCase())
+            const matchTeacher = !filters.teacher || note.teacher === filters.teacher
             return matchSearch && matchUniversity && matchSubject && matchTeacher
         })
+    })
+
+    const totalPages = computed(() => {
+        return Math.max(1, Math.ceil(filteredNotes.value.length / NOTES_PER_PAGE))
+    })
+
+    const paginatedNotes = computed(() => {
+        const start = (currentPage.value - 1) * NOTES_PER_PAGE
+        return filteredNotes.value.slice(start, start + NOTES_PER_PAGE)
     })
 
     // Загрузка конспектов с сервера
@@ -208,12 +240,33 @@
         router.push(`/note/${id}`)
     }
 
+    const goToPage = (page) => {
+        currentPage.value = Math.min(Math.max(page, 1), totalPages.value)
+    }
+
+    const goToPrevPage = () => {
+        goToPage(currentPage.value - 1)
+    }
+
+    const goToNextPage = () => {
+        goToPage(currentPage.value + 1)
+    }
+
     const toggleFavorite = async (note) => {
         const isNowFavorite = await favoritesStore.toggleFavorite(note)
         const currentNote = notes.value.find(n => n.id === note.id)
         if (currentNote) {
             currentNote.isFavorite = isNowFavorite
         }
+    }
+
+    const resultsWordForm = (count) => {
+        const abs = Math.abs(Number(count)) % 100
+        const last = abs % 10
+        if (abs > 10 && abs < 20) return 'результатов'
+        if (last > 1 && last < 5) return 'результата'
+        if (last === 1) return 'результат'
+        return 'результатов'
     }
 
     const handleClickOutside = (event) => {
@@ -233,13 +286,28 @@
     onUnmounted(() => {
         document.removeEventListener('click', handleClickOutside)
     })
+
+    watch(
+        [searchQuery, () => filters.university, () => filters.subject, () => filters.teacher],
+        () => {
+            currentPage.value = 1
+        }
+    )
+
+    watch(totalPages, (pagesCount) => {
+        if (currentPage.value > pagesCount) {
+            currentPage.value = pagesCount
+        }
+    })
 </script>
 
 <style scoped>
     .catalog-page {
         min-height: 100vh;
-        background: #0A0A0F;
+        background: #0F0F14;
         padding: 32px 80px;
+        max-width: 1440px;
+        margin: 0 auto;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
@@ -338,10 +406,12 @@
     .search-bar {
         position: relative;
         width: 100%;
+        height: 64px;
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 16px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .search-icon {
@@ -357,10 +427,12 @@
 
     .search-bar input {
         width: 100%;
-        padding: 18px 20px 18px 52px;
+        height: 100%;
+        padding: 17px 20px 17px 58px;
         background: transparent;
         border: none;
         font-size: 24px;
+        line-height: 29px;
         color: #FFFFFF;
     }
 
@@ -373,38 +445,39 @@
         }
 
     .filters {
-        display: flex;
+        display: grid;
+        grid-template-columns: 346px 432px minmax(0, 1fr);
         gap: 28px;
-        margin-bottom: 24px;
-    }
-
-    .filter-item {
-        flex: 1;
+        margin-bottom: 20px;
     }
 
         .filter-item select,
         .filter-item input {
             width: 100%;
-            padding: 14px 20px;
+            height: 56px;
+            padding: 13px 52px 14px 15px;
             background: #1A1A22;
             border: 1px solid #2A2A35;
             border-radius: 16px;
             font-size: 24px;
+            line-height: 29px;
             color: #FFFFFF;
             appearance: none;
             cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .filter-item input {
-            appearance: none;
-            cursor: text;
+        .filter-item select {
+            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="%23FFFFFF" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="m6 9 6 6 6-6"/%3E%3C/svg%3E');
+            background-repeat: no-repeat;
+            background-position: right 14px center;
         }
 
-            .filter-item select:focus,
-            .filter-item input:focus {
-                outline: none;
-                border-color: #8B7FFF;
-            }
+        .filter-item select:focus,
+        .filter-item input:focus {
+            outline: none;
+            border-color: #8B7FFF;
+        }
 
     .results-count {
         font-size: 18px;
@@ -415,40 +488,83 @@
     .notes-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 32px;
+        gap: 34px;
+    }
+
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 28px;
+        flex-wrap: wrap;
+    }
+
+    .page-btn {
+        min-width: 44px;
+        height: 44px;
+        padding: 0 14px;
+        border: 1px solid #2A2A35;
+        border-radius: 12px;
+        background: #1A1A22;
+        color: #FFFFFF;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .page-btn:hover:not(:disabled) {
+        border-color: #6C63FF;
+        transform: translateY(-1px);
+    }
+
+    .page-btn.active {
+        background: #6C63FF;
+        border-color: #6C63FF;
+    }
+
+    .page-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    .nav-btn {
+        padding: 0 16px;
     }
 
     .note-card {
         background: #1A1A22;
         border: 1px solid #2A2A35;
-        border-radius: 24px;
-        padding: 32px;
+        border-radius: 20px;
+        padding: 20px 28px 20px 29px;
         display: flex;
         position: relative;
         transition: transform 0.2s, box-shadow 0.2s;
-        min-height: 280px;
+        min-height: 260px;
     }
 
         .note-card:hover {
+            border-color: #6C63FF;
             transform: translateY(-4px);
             box-shadow: 0px 8px 4px rgba(108, 99, 255, 0.15);
         }
 
     .card-icon {
-        width: 100px;
-        height: 110px;
+        width: 62px;
+        height: 66px;
         background: #2A2348;
-        border-radius: 16px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 32px;
+        margin-right: 24px;
         flex-shrink: 0;
     }
 
     .file-icon {
-        width: 65px;
-        height: 70px;
+        width: 45px;
+        height: 50px;
         background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="2"%3E%3Cpath d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/%3E%3Cpolyline points="13 2 13 9 20 9"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
@@ -458,35 +574,38 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        min-width: 0;
     }
 
         .card-content h3 {
-            font-size: 32px;
+            font-size: 26px;
+            line-height: 31px;
             font-weight: 700;
             color: #FFFFFF;
-            margin: 0 0 12px 0;
+            margin: 0 26px 8px 0;
         }
 
     .subject {
-        font-size: 22px;
+        font-size: 18px;
+        line-height: 22px;
         font-weight: 700;
         color: #A0A0B0;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
     }
 
     .teacher-university {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 700;
         color: #9A9A9F;
-        line-height: 1.6;
-        margin-bottom: 24px;
+        line-height: 30px;
+        margin-bottom: 14px;
     }
 
     .card-footer {
         display: flex;
         align-items: center;
-        gap: 32px;
-        padding-top: 20px;
+        gap: 28px;
+        padding-top: 16px;
         border-top: 1px solid #2A2A35;
         flex-wrap: wrap;
     }
@@ -498,14 +617,14 @@
     }
 
     .star {
-        width: 28px;
-        height: 28px;
+        width: 40px;
+        height: 40px;
         background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFE100"%3E%3Cpolygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9 12 2"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .rating span {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 700;
         color: #FFFFFF;
     }
@@ -519,9 +638,11 @@
     .open-btn {
         background: #6C63FF;
         border: none;
-        border-radius: 16px;
-        padding: 12px 32px;
-        font-size: 22px;
+        border-radius: 14px;
+        width: 156px;
+        height: 52px;
+        font-size: 20px;
+        line-height: 24px;
         font-weight: 600;
         color: #FFFFFF;
         cursor: pointer;
@@ -533,6 +654,13 @@
             background: #594FFE;
             transform: translateY(-2px);
         }
+
+    .search-bar:hover,
+    .filter-item select:hover,
+    .filter-item input:hover {
+        border-color: #6C63FF;
+        box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
+    }
 
     .like-btn {
         position: absolute;
@@ -557,10 +685,16 @@
     @media (max-width: 1100px) {
         .catalog-page {
             padding: 20px 40px;
+            max-width: none;
         }
 
         .notes-grid {
             gap: 24px;
+        }
+
+        .filters {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
         }
 
         .note-card {
@@ -568,20 +702,23 @@
         }
 
         .card-content h3 {
-            font-size: 28px;
+            font-size: 24px;
+            line-height: 29px;
         }
 
         .subject {
-            font-size: 20px;
+            font-size: 17px;
         }
 
         .teacher-university {
-            font-size: 18px;
+            font-size: 16px;
+            line-height: 26px;
         }
 
         .open-btn {
-            padding: 10px 24px;
-            font-size: 20px;
+            width: 136px;
+            height: 46px;
+            font-size: 18px;
         }
     }
 
@@ -601,6 +738,7 @@
 
         .filters {
             flex-direction: column;
+            display: flex;
             gap: 12px;
         }
 
@@ -645,15 +783,16 @@
         }
 
         .card-content h3 {
-            font-size: 24px;
+            font-size: 22px;
         }
 
         .subject {
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .teacher-university {
-            font-size: 16px;
+            font-size: 15px;
+            line-height: 24px;
         }
 
         .rating span,
@@ -663,7 +802,8 @@
 
         .open-btn {
             font-size: 18px;
-            padding: 8px 20px;
+            width: 132px;
+            height: 44px;
         }
     }
 </style>

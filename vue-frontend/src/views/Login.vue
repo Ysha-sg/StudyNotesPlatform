@@ -1,10 +1,17 @@
 ﻿<template>
     <div class="login-page">
+        <button type="button" class="back-button" @click="goBack" aria-label="Назад">
+            <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="24.5" cy="24.5" r="23" stroke="#A0A0B0" stroke-width="2.5" />
+                <polyline points="27 17 18 24.5 27 32" stroke="#A0A0B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </button>
+
         <!-- Логотип и заголовки -->
-        <div class="logo">
+        <div class="logo" @click="goHome" role="button" tabindex="0" @keydown.enter="goHome" @keydown.space.prevent="goHome">
             <div class="book-icon">
                 <svg width="69" height="69" viewBox="0 0 69 69" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M34.5 20.125C34.5 17.075 33.2884 14.1499 31.1317 11.9933C28.9751 9.8366 26.05 8.625 23 8.625H5.75V51.75H25.875C28.1625 51.75 30.3563 52.6587 31.9738 54.2762C33.5913 55.8937 34.5 58.0875 34.5 60.375M34.5 20.125V60.375M34.5 20.125C34.5 17.075 35.7116 14.1499 37.8683 11.9933C40.0249 9.8366 42.95 8.625 46 8.625H63.25V51.75H43.125C40.8375 51.75 38.6437 52.6587 37.0262 54.2762C35.4087 55.8937 34.5 58.0875 34.5 60.375" stroke="#8B7FFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M34.5 20.125C34.5 17.075 33.2884 14.1499 31.1317 11.9933C28.9751 9.8366 26.05 8.625 23 8.625H5.75V51.75H25.875C28.1625 51.75 30.3563 52.6587 31.9738 54.2762C33.5913 55.8937 34.5 58.0875 34.5 60.375M34.5 20.125V60.375M34.5 20.125C34.5 17.075 35.7116 14.1499 37.8683 11.9933C40.0249 9.8366 42.95 8.625 46 8.625H63.25V51.75H43.125C40.8375 51.75 38.6437 52.6587 37.0262 54.2762C35.4087 55.8937 34.5 58.0875 34.5 60.375" stroke="#6C63FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </div>
         </div>
@@ -58,9 +65,10 @@
 
 <script setup>
     import { ref, reactive } from 'vue'
-    import { useRouter } from 'vue-router'
+    import { useRoute, useRouter } from 'vue-router'
     import { useAuthStore } from '@/stores/auth'
 
+    const route = useRoute()
     const router = useRouter()
     const authStore = useAuthStore()
 
@@ -80,6 +88,14 @@
     const clearError = (field) => {
         errors[field] = ''
         generalError.value = ''
+    }
+
+    const goBack = () => {
+        router.back()
+    }
+
+    const goHome = () => {
+        router.push('/')
     }
 
     const validateForm = () => {
@@ -114,7 +130,21 @@
         const result = await authStore.login(form.email, form.password)
 
         if (result.success) {
-            router.push('/')
+            const redirectPath =
+                typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
+                    ? route.query.redirect
+                    : ''
+
+            if (redirectPath) {
+                router.push(redirectPath)
+                return
+            }
+
+            if (authStore.hasModeratorAccess) {
+                router.push('/moderation')
+            } else {
+                router.push('/')
+            }
         } else {
             generalError.value = result.message || 'Неверный email или пароль'
         }
@@ -124,20 +154,44 @@
 <style scoped>
     .login-page {
         min-height: 100vh;
-        background: #0A0A0F;
+        background: #0F0F14;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
-        padding: 40px 20px;
+        padding: 70px 20px 40px;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        position: relative;
     }
+
+    .back-button {
+        position: absolute;
+        left: 80px;
+        top: 59px;
+        width: 49px;
+        height: 49px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+    }
+
+        .back-button svg circle,
+        .back-button svg polyline {
+            transition: stroke 0.2s ease;
+        }
+
+        .back-button:hover svg circle,
+        .back-button:hover svg polyline {
+            stroke: #6C63FF;
+        }
 
     /* Логотип */
     .logo {
         display: flex;
         justify-content: center;
         margin-bottom: 24px;
+        cursor: pointer;
     }
 
     .book-icon {
@@ -168,7 +222,7 @@
         font-weight: 400;
         text-align: center;
         color: #A0A0B0;
-        margin-bottom: 40px;
+        margin-bottom: 28px;
     }
 
     /* Карточка входа */
@@ -178,16 +232,16 @@
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 20px;
-        padding: 40px 32px;
+        padding: 36px 32px 28px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
     .form-title {
         font-size: 28px;
         font-weight: 600;
-        text-align: center;
+        text-align: left;
         color: #FFFFFF;
-        margin-bottom: 32px;
+        margin-bottom: 20px;
     }
 
     /* Поля формы */
@@ -219,12 +273,12 @@
     }
 
     .mail-icon {
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23A0A0B0" stroke-width="2"%3E%3Crect x="2" y="4" width="20" height="16" rx="2"/%3E%3Cpath d="m22 7-10 7L2 7"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"%3E%3Crect x="3" y="5" width="18" height="14" rx="2"/%3E%3Cpath d="m3 8 9 6 9-6"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .lock-icon {
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23A0A0B0" stroke-width="2"%3E%3Crect x="3" y="11" width="18" height="11" rx="2" ry="2"/%3E%3Cpath d="M7 11V7a5 5 0 0 1 10 0v4"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"%3E%3Crect x="3" y="11" width="18" height="10" rx="2"/%3E%3Cpath d="M7 11V8a5 5 0 0 1 10 0v3"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
@@ -245,13 +299,13 @@
 
         .input-wrapper input:focus {
             outline: none;
-            border-color: #8B7FFF;
-            box-shadow: 0 0 0 3px rgba(139, 127, 255, 0.2);
+            border-color: #6C63FF;
+            box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
         }
 
     .input-wrapper.error input {
         border-color: #EF4444;
-        box-shadow: 0px 0px 4px rgba(239, 68, 68, 0.25);
+        box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.28);
     }
 
     .eye-icon {
@@ -261,7 +315,7 @@
         transform: translateY(-50%);
         width: 31px;
         height: 31px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2"%3E%3Cpath d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/%3E%3Ccircle cx="12" cy="12" r="3"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/%3E%3Ccircle cx="12" cy="12" r="3"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
         border: none;
         cursor: pointer;
@@ -270,7 +324,7 @@
     }
 
         .eye-icon.off {
-            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2"%3E%3Cpath d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/%3E%3Cline x1="1" y1="1" x2="23" y2="23"/%3E%3C/svg%3E') no-repeat center;
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/%3E%3Cline x1="1" y1="1" x2="23" y2="23"/%3E%3C/svg%3E') no-repeat center;
             background-size: contain;
         }
 
@@ -319,8 +373,8 @@
 
     .register-link {
         text-align: center;
-        margin-top: 32px;
-        padding-top: 24px;
+        margin-top: 20px;
+        padding-top: 16px;
         border-top: 1px solid #2A2A35;
         font-size: 24px;
         font-weight: 600;
@@ -328,7 +382,7 @@
     }
 
         .register-link a {
-            color: #A0A0B0;
+            color: #6C63FF;
             text-decoration: none;
             transition: color 0.2s;
         }
@@ -340,6 +394,11 @@
 
     /* Адаптивность */
     @media (max-width: 560px) {
+        .back-button {
+            left: 20px;
+            top: 20px;
+        }
+
         .login-card {
             width: 90%;
             padding: 30px 20px;
@@ -369,3 +428,4 @@
         }
     }
 </style>
+

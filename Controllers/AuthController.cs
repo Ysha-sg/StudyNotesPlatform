@@ -27,18 +27,18 @@ public class AuthController : ControllerBase
         // 1. Проверка email
         var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
         if (existingUser != null)
-            return BadRequest(new Models.AuthResponse { Message = "Пользователь с таким email уже существует" });
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Пользователь с таким email уже существует");
 
         // 2. Поиск университета (без учёта регистра)
         var university = await _context.Universities
             .FirstOrDefaultAsync(u => EF.Functions.ILike(u.Name, model.UniversityName));
         if (university == null)
-            return BadRequest(new Models.AuthResponse { Message = $"Университет '{model.UniversityName}' не найден" });
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: $"Университет '{model.UniversityName}' не найден");
 
         // 3. Поиск роли "student"
         var studentRole = await _context.Roles.FirstOrDefaultAsync(r => r.Code == "student");
         if (studentRole == null)
-            return BadRequest(new Models.AuthResponse { Message = "Роль 'student' не найдена" });
+            return Problem(statusCode: StatusCodes.Status500InternalServerError, title: "Роль 'student' не найдена");
 
         // 4. Хэширование пароля
         var passwordHash = HashPassword(model.Password);
@@ -59,7 +59,7 @@ public class AuthController : ControllerBase
 
         var token = _tokenService.GenerateToken(newUser);
 
-        return Ok(new Models.AuthResponse
+        return Created("/api/profile/me", new Models.AuthResponse
         {
             Token = token,
             FullName = newUser.FullName,
@@ -78,7 +78,7 @@ public class AuthController : ControllerBase
 
         if (user == null || !VerifyPassword(model.Password, user.PasswordHash))
         {
-            return Unauthorized(new Models.AuthResponse { Message = "Неверный email или пароль" });
+            return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Неверный email или пароль");
         }
 
         var token = _tokenService.GenerateToken(user);
@@ -104,3 +104,4 @@ public class AuthController : ControllerBase
         return HashPassword(password) == hash;
     }
 }
+

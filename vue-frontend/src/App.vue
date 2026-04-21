@@ -13,7 +13,7 @@
     const favoritesStore = useFavoritesStore()
 
     onMounted(async () => {
-        if (authStore.isAuthenticated) {
+        if (authStore.isAuthenticated && !authStore.hasModeratorAccess) {
             await favoritesStore.loadFavorites()
         }
     })
