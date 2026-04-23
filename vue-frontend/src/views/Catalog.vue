@@ -25,7 +25,7 @@
                 <div v-if="isMenuOpen" class="dropdown-menu">
                     <template v-if="authStore.isAuthenticated">
                         <div class="user-name">{{ authStore.user?.fullName }}</div>
-                        <div class="menu-item" @click="goToProfile">Мои конспекты</div>
+                        <div class="menu-item" @click="goToProfile">Профиль</div>
                         <div class="menu-item" @click="goToAddNote">Добавить конспект</div>
                         <div class="menu-item logout" @click="handleLogout">Выйти</div>
                     </template>
@@ -43,29 +43,73 @@
             <input type="text" v-model="searchQuery" placeholder="Поиск конспектов..." />
         </div>
 
-        <!-- Фильтры -->
+        <!-- Фильтры с кастомными выпадающими списками (без иконок) -->
         <div class="filters">
+            <!-- Фильтр по вузу -->
             <div class="filter-item">
-                <select v-model="filters.university">
-                    <option value="">Все вузы</option>
-                    <option v-for="uni in universities" :key="uni" :value="uni">{{ uni }}</option>
-                </select>
+                <div class="custom-select" :class="{ open: isUniversityFilterOpen }">
+                    <div class="select-trigger" @click="toggleUniversityFilter">
+                        <span class="select-value" :class="{ placeholder: !filters.university }">
+                            {{ filters.university || 'Все вузы' }}
+                        </span>
+                        <span class="chevron-icon"></span>
+                    </div>
+                    <div v-if="isUniversityFilterOpen" class="select-dropdown">
+                        <div class="select-option" :class="{ selected: filters.university === '' }" @click="selectUniversityFilter('')">
+                            Все вузы
+                        </div>
+                        <div v-for="uni in universities" :key="uni" class="select-option" :class="{ selected: filters.university === uni }" @click="selectUniversityFilter(uni)">
+                            {{ uni }}
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Фильтр по предмету -->
             <div class="filter-item">
-                <select v-model="filters.subject">
-                    <option value="">Все предметы</option>
-                    <option v-for="subj in subjects" :key="subj" :value="subj">{{ subj }}</option>
-                </select>
+                <div class="custom-select" :class="{ open: isSubjectFilterOpen }">
+                    <div class="select-trigger" @click="toggleSubjectFilter">
+                        <span class="select-value" :class="{ placeholder: !filters.subject }">
+                            {{ filters.subject || 'Все предметы' }}
+                        </span>
+                        <span class="chevron-icon"></span>
+                    </div>
+                    <div v-if="isSubjectFilterOpen" class="select-dropdown">
+                        <div class="select-option" :class="{ selected: filters.subject === '' }" @click="selectSubjectFilter('')">
+                            Все предметы
+                        </div>
+                        <div v-for="subj in subjects" :key="subj" class="select-option" :class="{ selected: filters.subject === subj }" @click="selectSubjectFilter(subj)">
+                            {{ subj }}
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Фильтр по преподавателю -->
             <div class="filter-item">
-                <input type="text" v-model="filters.teacher" placeholder="Все преподаватели" />
+                <div class="custom-select" :class="{ open: isTeacherFilterOpen }">
+                    <div class="select-trigger" @click="toggleTeacherFilter">
+                        <span class="select-value" :class="{ placeholder: !filters.teacher }">
+                            {{ filters.teacher || 'Все преподаватели' }}
+                        </span>
+                        <span class="chevron-icon"></span>
+                    </div>
+                    <div v-if="isTeacherFilterOpen" class="select-dropdown">
+                        <div class="select-option" :class="{ selected: filters.teacher === '' }" @click="selectTeacherFilter('')">
+                            Все преподаватели
+                        </div>
+                        <div v-for="teacher in allTeachers" :key="teacher" class="select-option" :class="{ selected: filters.teacher === teacher }" @click="selectTeacherFilter(teacher)">
+                            {{ teacher }}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="results-count">Показано {{ filteredNotes.length }} результатов</div>
+        <div class="results-count">Показано {{ filteredNotes.length }} {{ resultsWordForm(filteredNotes.length) }}</div>
 
         <div class="notes-grid">
-            <div v-for="note in filteredNotes" :key="note.id" class="note-card">
+            <div v-for="note in paginatedNotes" :key="note.id" class="note-card">
                 <div class="card-icon">
                     <div class="file-icon"></div>
                 </div>
@@ -90,11 +134,17 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="totalPages > 1" class="pagination">
+            <button class="page-btn nav-btn" :disabled="currentPage === 1" @click="goToPrevPage">Назад</button>
+            <button v-for="page in totalPages" :key="page" class="page-btn" :class="{ active: page === currentPage }" @click="goToPage(page)">{{ page }}</button>
+            <button class="page-btn nav-btn" :disabled="currentPage === totalPages" @click="goToNextPage">Вперёд</button>
+        </div>
     </div>
 </template>
 
 <script setup>
-    import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+    import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
     import { useRouter } from 'vue-router'
     import { useAuthStore } from '@/stores/auth'
     import { useFavoritesStore } from '@/stores/favorites'
@@ -112,26 +162,53 @@
         teacher: ''
     })
 
+    // Состояния для выпадающих списков фильтров
+    const isUniversityFilterOpen = ref(false)
+    const isSubjectFilterOpen = ref(false)
+    const isTeacherFilterOpen = ref(false)
+
     const universities = ref([])
     const subjects = ref([])
     const allTeachers = ref([])
-
-    // Конспекты загружаем из API
+    const currentPage = ref(1)
+    const NOTES_PER_PAGE = 6
     const notes = ref([])
 
-    // Фильтрация конспектов
     const filteredNotes = computed(() => {
         return notes.value.filter(note => {
             const matchSearch = note.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                 note.subject.toLowerCase().includes(searchQuery.value.toLowerCase())
             const matchUniversity = !filters.university || note.university === filters.university
             const matchSubject = !filters.subject || note.subject === filters.subject
-            const matchTeacher = !filters.teacher || note.teacher.toLowerCase().includes(filters.teacher.toLowerCase())
+            const matchTeacher = !filters.teacher || note.teacher === filters.teacher
             return matchSearch && matchUniversity && matchSubject && matchTeacher
         })
     })
 
-    // Загрузка конспектов с сервера
+    const totalPages = computed(() => Math.max(1, Math.ceil(filteredNotes.value.length / NOTES_PER_PAGE)))
+    const paginatedNotes = computed(() => {
+        const start = (currentPage.value - 1) * NOTES_PER_PAGE
+        return filteredNotes.value.slice(start, start + NOTES_PER_PAGE)
+    })
+
+    // Методы для фильтров
+    const toggleUniversityFilter = () => { isUniversityFilterOpen.value = !isUniversityFilterOpen.value }
+    const toggleSubjectFilter = () => { isSubjectFilterOpen.value = !isSubjectFilterOpen.value }
+    const toggleTeacherFilter = () => { isTeacherFilterOpen.value = !isTeacherFilterOpen.value }
+
+    const selectUniversityFilter = (uni) => {
+        filters.university = uni
+        isUniversityFilterOpen.value = false
+    }
+    const selectSubjectFilter = (subj) => {
+        filters.subject = subj
+        isSubjectFilterOpen.value = false
+    }
+    const selectTeacherFilter = (teacher) => {
+        filters.teacher = teacher
+        isTeacherFilterOpen.value = false
+    }
+
     const loadNotes = async () => {
         try {
             const response = await api.get('/notes')
@@ -141,7 +218,6 @@
         }
     }
 
-    // Загрузка фильтров
     const loadUniversities = async () => {
         try {
             const response = await api.get('/lookup/all-universities')
@@ -169,56 +245,39 @@
         }
     }
 
-    // Методы меню
-    const toggleMenu = () => {
-        isMenuOpen.value = !isMenuOpen.value
-    }
-
-    const closeMenu = () => {
-        isMenuOpen.value = false
-    }
-
-    const goToLogin = () => {
-        router.push('/login')
-        closeMenu()
-    }
-
-    const goToRegister = () => {
-        router.push('/register')
-        closeMenu()
-    }
-
-    const goToProfile = () => {
-        router.push('/profile')
-        closeMenu()
-    }
-
-    const goToAddNote = () => {
-        router.push('/add-note')
-        closeMenu()
-    }
-
-    const handleLogout = () => {
-        authStore.logout()
-        closeMenu()
-        router.push('/login')
-    }
-
-    const openNote = (id) => {
-        router.push(`/note/${id}`)
-    }
+    const toggleMenu = () => { isMenuOpen.value = !isMenuOpen.value }
+    const closeMenu = () => { isMenuOpen.value = false }
+    const goToLogin = () => { router.push('/login'); closeMenu() }
+    const goToRegister = () => { router.push('/register'); closeMenu() }
+    const goToProfile = () => { router.push('/profile'); closeMenu() }
+    const goToAddNote = () => { router.push('/add-note'); closeMenu() }
+    const handleLogout = () => { authStore.logout(); closeMenu(); router.push('/login') }
+    const openNote = (id) => { router.push(`/note/${id}`) }
+    const goToPage = (page) => { currentPage.value = Math.min(Math.max(page, 1), totalPages.value) }
+    const goToPrevPage = () => { goToPage(currentPage.value - 1) }
+    const goToNextPage = () => { goToPage(currentPage.value + 1) }
 
     const toggleFavorite = async (note) => {
         const isNowFavorite = await favoritesStore.toggleFavorite(note)
         const currentNote = notes.value.find(n => n.id === note.id)
-        if (currentNote) {
-            currentNote.isFavorite = isNowFavorite
-        }
+        if (currentNote) currentNote.isFavorite = isNowFavorite
+    }
+
+    const resultsWordForm = (count) => {
+        const abs = Math.abs(Number(count)) % 100
+        const last = abs % 10
+        if (abs > 10 && abs < 20) return 'результатов'
+        if (last > 1 && last < 5) return 'результата'
+        if (last === 1) return 'результат'
+        return 'результатов'
     }
 
     const handleClickOutside = (event) => {
-        if (!event.target.closest('.avatar-menu')) {
-            isMenuOpen.value = false
+        if (!event.target.closest('.avatar-menu')) isMenuOpen.value = false
+        if (!event.target.closest('.filter-item')) {
+            isUniversityFilterOpen.value = false
+            isSubjectFilterOpen.value = false
+            isTeacherFilterOpen.value = false
         }
     }
 
@@ -230,16 +289,19 @@
         loadTeachers()
     })
 
-    onUnmounted(() => {
-        document.removeEventListener('click', handleClickOutside)
-    })
+    onUnmounted(() => { document.removeEventListener('click', handleClickOutside) })
+
+    watch([searchQuery, () => filters.university, () => filters.subject, () => filters.teacher], () => { currentPage.value = 1 })
+    watch(totalPages, (pagesCount) => { if (currentPage.value > pagesCount) currentPage.value = pagesCount })
 </script>
 
 <style scoped>
     .catalog-page {
         min-height: 100vh;
-        background: #0A0A0F;
+        background: #0F0F14;
         padding: 32px 80px;
+        max-width: 1440px;
+        margin: 0 auto;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
@@ -338,10 +400,11 @@
     .search-bar {
         position: relative;
         width: 100%;
+        height: 64px;
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 16px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
     }
 
     .search-icon {
@@ -357,7 +420,8 @@
 
     .search-bar input {
         width: 100%;
-        padding: 18px 20px 18px 52px;
+        height: 100%;
+        padding: 17px 20px 17px 58px;
         background: transparent;
         border: none;
         font-size: 24px;
@@ -368,43 +432,97 @@
             color: #7F8499;
         }
 
-        .search-bar input:focus {
-            outline: none;
-        }
-
+    /* Фильтры */
     .filters {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
         gap: 28px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
     }
 
     .filter-item {
-        flex: 1;
+        position: relative;
     }
 
-        .filter-item select,
-        .filter-item input {
-            width: 100%;
-            padding: 14px 20px;
-            background: #1A1A22;
-            border: 1px solid #2A2A35;
-            border-radius: 16px;
-            font-size: 24px;
-            color: #FFFFFF;
-            appearance: none;
-            cursor: pointer;
+    .custom-select {
+        position: relative;
+    }
+
+    .select-trigger {
+        width: 100%;
+        height: 56px;
+        padding: 0 16px;
+        background: #1A1A22;
+        border: 1px solid #2A2A35;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        .custom-select.open .select-trigger,
+        .select-trigger:hover {
+            border-color: #6C63FF;
+            box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
         }
 
-        .filter-item input {
-            appearance: none;
-            cursor: text;
+    .select-value {
+        flex: 1;
+        font-size: 20px;
+        color: #FFFFFF;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+        .select-value.placeholder {
+            color: #7F8499;
         }
 
-            .filter-item select:focus,
-            .filter-item input:focus {
-                outline: none;
-                border-color: #8B7FFF;
-            }
+    .chevron-icon {
+        width: 24px;
+        height: 24px;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23FFFFFF" stroke-width="2.5"%3E%3Cpolyline points="6 9 12 15 18 9"/%3E%3C/svg%3E') no-repeat center;
+        background-size: contain;
+        transition: transform 0.2s;
+    }
+
+    .custom-select.open .chevron-icon {
+        transform: rotate(180deg);
+    }
+
+    .select-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #1A1A22;
+        border: 1px solid #2A2A35;
+        border-radius: 12px;
+        z-index: 100;
+        max-height: 250px;
+        overflow-y: auto;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .select-option {
+        padding: 10px 16px;
+        font-size: 18px;
+        color: #FFFFFF;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+        .select-option:hover {
+            background: #2A2A35;
+        }
+
+        .select-option.selected {
+            background: #2A2A35;
+            color: #6C63FF;
+        }
 
     .results-count {
         font-size: 18px;
@@ -412,43 +530,46 @@
         margin-bottom: 24px;
     }
 
+    /* Сетка карточек */
     .notes-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 32px;
+        gap: 34px;
     }
 
+    /* Карточка конспекта */
     .note-card {
         background: #1A1A22;
         border: 1px solid #2A2A35;
-        border-radius: 24px;
-        padding: 32px;
+        border-radius: 20px;
+        padding: 24px;
         display: flex;
-        position: relative;
+        gap: 24px;
         transition: transform 0.2s, box-shadow 0.2s;
-        min-height: 280px;
+        position: relative;
+        align-items: flex-start;
     }
 
         .note-card:hover {
+            border-color: #6C63FF;
             transform: translateY(-4px);
             box-shadow: 0px 8px 4px rgba(108, 99, 255, 0.15);
         }
 
     .card-icon {
-        width: 100px;
-        height: 110px;
+        width: 62px;
+        height: 66px;
         background: #2A2348;
-        border-radius: 16px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 32px;
         flex-shrink: 0;
     }
 
     .file-icon {
-        width: 65px;
-        height: 70px;
+        width: 45px;
+        height: 50px;
         background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="2"%3E%3Cpath d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/%3E%3Cpolyline points="13 2 13 9 20 9"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
@@ -457,38 +578,40 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        margin-left: 0;
+        padding-left: 0;
     }
 
         .card-content h3 {
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 700;
             color: #FFFFFF;
-            margin: 0 0 12px 0;
+            margin: 0 0 8px 0;
         }
 
     .subject {
-        font-size: 22px;
+        font-size: 18px;
         font-weight: 700;
         color: #A0A0B0;
-        margin-bottom: 20px;
+        margin-bottom: 12px;
     }
 
     .teacher-university {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 700;
         color: #9A9A9F;
-        line-height: 1.6;
-        margin-bottom: 24px;
+        line-height: 30px;
+        margin-bottom: 16px;
     }
 
+    /* Футер карточки с разделительной линией */
     .card-footer {
         display: flex;
         align-items: center;
-        gap: 32px;
-        padding-top: 20px;
-        border-top: 1px solid #2A2A35;
+        gap: 24px;
         flex-wrap: wrap;
+        padding-top: 16px;
+        border-top: 1px solid #2A2A35;
     }
 
     .rating {
@@ -498,14 +621,14 @@
     }
 
     .star {
-        width: 28px;
-        height: 28px;
+        width: 40px;
+        height: 40px;
         background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFE100"%3E%3Cpolygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9 12 2"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .rating span {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 700;
         color: #FFFFFF;
     }
@@ -519,9 +642,11 @@
     .open-btn {
         background: #6C63FF;
         border: none;
-        border-radius: 16px;
-        padding: 12px 32px;
-        font-size: 22px;
+        border-radius: 14px;
+        width: 156px;
+        height: 52px;
+        font-size: 20px;
+        line-height: 24px;
         font-weight: 600;
         color: #FFFFFF;
         cursor: pointer;
@@ -534,19 +659,19 @@
             transform: translateY(-2px);
         }
 
+    /* Кнопка лайка */
     .like-btn {
         position: absolute;
-        top: 24px;
-        right: 24px;
+        top: 20px;
+        right: 20px;
         cursor: pointer;
     }
 
     .heart {
-        width: 36px;
-        height: 36px;
+        width: 24px;
+        height: 24px;
         background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2"%3E%3Cpath d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
-        transition: all 0.2s;
     }
 
         .heart.liked {
@@ -554,6 +679,46 @@
             background-size: contain;
         }
 
+    /* Пагинация */
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 28px;
+        flex-wrap: wrap;
+    }
+
+    .page-btn {
+        min-width: 44px;
+        height: 44px;
+        padding: 0 14px;
+        border: 1px solid #2A2A35;
+        border-radius: 12px;
+        background: #1A1A22;
+        color: #FFFFFF;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: #6C63FF;
+            transform: translateY(-1px);
+        }
+
+        .page-btn.active {
+            background: #6C63FF;
+            border-color: #6C63FF;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+    /* Адаптив */
     @media (max-width: 1100px) {
         .catalog-page {
             padding: 20px 40px;
@@ -563,25 +728,8 @@
             gap: 24px;
         }
 
-        .note-card {
-            padding: 24px;
-        }
-
-        .card-content h3 {
-            font-size: 28px;
-        }
-
-        .subject {
-            font-size: 20px;
-        }
-
-        .teacher-university {
-            font-size: 18px;
-        }
-
-        .open-btn {
-            padding: 10px 24px;
-            font-size: 20px;
+        .filters {
+            gap: 14px;
         }
     }
 
@@ -601,17 +749,29 @@
 
         .filters {
             flex-direction: column;
+            display: flex;
             gap: 12px;
         }
 
-        .filter-item select,
-        .filter-item input {
+        .select-value {
             font-size: 18px;
-            padding: 12px 16px;
         }
 
-        .search-bar input {
-            font-size: 18px;
+        .note-card {
+            flex-direction: column;
+        }
+
+        .card-icon {
+            margin-bottom: 16px;
+        }
+
+        .open-btn {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        .card-content h3 {
+            font-size: 20px;
         }
     }
 
@@ -628,42 +788,29 @@
             font-size: 16px;
         }
 
-        .note-card {
-            flex-direction: column;
-        }
-
-        .card-icon {
-            margin-bottom: 20px;
-        }
-
-        .card-footer {
-            flex-wrap: wrap;
-        }
-
-        .open-btn {
-            margin-left: 0;
-        }
-
-        .card-content h3 {
-            font-size: 24px;
-        }
-
-        .subject {
-            font-size: 18px;
-        }
-
-        .teacher-university {
+        .select-value {
             font-size: 16px;
         }
 
-        .rating span,
-        .downloads {
+        .card-content h3 {
             font-size: 18px;
         }
 
+        .subject {
+            font-size: 14px;
+        }
+
+        .teacher-university {
+            font-size: 12px;
+        }
+
+        .rating span, .downloads {
+            font-size: 14px;
+        }
+
         .open-btn {
-            font-size: 18px;
-            padding: 8px 20px;
+            font-size: 14px;
+            height: 44px;
         }
     }
 </style>

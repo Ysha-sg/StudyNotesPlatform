@@ -2,13 +2,21 @@
     <div class="note-details-page">
         <!-- Шапка -->
         <div class="header">
-            <div class="logo-area" @click="goToCatalog">
-                <div class="logo-icon">
-                    <svg width="55" height="50" viewBox="0 0 69 69" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M34.5 20.125C34.5 17.075 33.2884 14.1499 31.1317 11.9933C28.9751 9.8366 26.05 8.625 23 8.625H5.75V51.75H25.875C28.1625 51.75 30.3563 52.6587 31.9738 54.2762C33.5913 55.8937 34.5 58.0875 34.5 60.375M34.5 20.125V60.375M34.5 20.125C34.5 17.075 35.7116 14.1499 37.8683 11.9933C40.0249 9.8366 42.95 8.625 46 8.625H63.25V51.75H43.125C40.8375 51.75 38.6437 52.6587 37.0262 54.2762C35.4087 55.8937 34.5 58.0875 34.5 60.375" stroke="#8B7FFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            <div class="header-left">
+                <div class="back-button" @click="goBack">
+                    <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="24.5" cy="24.5" r="23" stroke="#A0A0B0" stroke-width="2.5" />
+                        <polyline points="27 17 18 24.5 27 32" stroke="#A0A0B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
-                <span class="logo-text">Каталог конспектов</span>
+                <div class="logo-area" @click="goToCatalog">
+                    <div class="logo-icon">
+                        <svg width="55" height="50" viewBox="0 0 69 69" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M34.5 20.125C34.5 17.075 33.2884 14.1499 31.1317 11.9933C28.9751 9.8366 26.05 8.625 23 8.625H5.75V51.75H25.875C28.1625 51.75 30.3563 52.6587 31.9738 54.2762C33.5913 55.8937 34.5 58.0875 34.5 60.375M34.5 20.125V60.375M34.5 20.125C34.5 17.075 35.7116 14.1499 37.8683 11.9933C40.0249 9.8366 42.95 8.625 46 8.625H63.25V51.75H43.125C40.8375 51.75 38.6437 52.6587 37.0262 54.2762C35.4087 55.8937 34.5 58.0875 34.5 60.375" stroke="#8B7FFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <span class="logo-text">Каталог конспектов</span>
+                </div>
             </div>
 
             <div class="avatar-menu" @click.stop="toggleMenu">
@@ -22,7 +30,7 @@
                 <div v-if="isMenuOpen" class="dropdown-menu">
                     <template v-if="authStore.isAuthenticated">
                         <div class="user-name">{{ authStore.user?.fullName }}</div>
-                        <div class="menu-item" @click="goToProfile">Мои конспекты</div>
+                        <div class="menu-item" @click="goToProfile">Профиль</div>
                         <div class="menu-item" @click="goToAddNote">Добавить конспект</div>
                         <div class="menu-item logout" @click="handleLogout">Выйти</div>
                     </template>
@@ -34,94 +42,127 @@
             </div>
         </div>
 
-        <!-- Стрелка назад -->
-        <div class="back-button" @click="goBack">
-            <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="24.5" cy="24.5" r="23" stroke="#A0A0B0" stroke-width="2.5" />
-                <polyline points="27 17 18 24.5 27 32" stroke="#A0A0B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-        </div>
-
-        <!-- Основной контент -->
-        <div class="content" v-if="note.id">
-            <div class="main-column">
+        <!-- Контент с выравниванием -->
+        <div class="content-wrapper">
+            <!-- Заголовок и мета-информация -->
+            <div class="note-header" v-if="note.id">
                 <h1 class="note-title">{{ note.title }}</h1>
-
                 <div class="note-meta">
                     <div class="meta-item">
-                        <div class="book-icon-small"></div>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 7C12 5.93913 11.5786 4.92172 10.8284 4.17157C10.0783 3.42143 9.06087 3 8 3H2V18H9C9.79565 18 10.5587 18.3161 11.1213 18.8787C11.6839 19.4413 12 20.2044 12 21M12 7V21M12 7C12 5.93913 12.4214 4.92172 13.1716 4.17157C13.9217 3.42143 14.9391 3 16 3H22V18H15C14.2044 18 13.4413 18.3161 12.8787 18.8787C12.3161 19.4413 12 20.2044 12 21" stroke="#6C63FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
                         <span>{{ note.subject }}</span>
                     </div>
                     <div class="meta-item">
-                        <div class="uni-icon-small"></div>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g clip-path="url(#clip0_62_174)">
+                                <path d="M24 9.41999C24.0005 9.09417 23.9147 8.77403 23.7514 8.49212C23.588 8.21021 23.353 7.97658 23.07 7.81499L12.96 1.81499C12.6687 1.645 12.3374 1.55542 12 1.55542C11.6627 1.55542 11.3314 1.645 11.04 1.81499L0.915025 7.81499C0.635233 7.98101 0.403453 8.21698 0.242466 8.49969C0.0814795 8.78241 -0.00317383 9.10215 -0.00317383 9.42749C-0.00317383 9.75283 0.0814795 10.0726 0.242466 10.3553C0.403453 10.638 0.635233 10.874 0.915025 11.04L3.79502 12.72V16.935C3.79676 17.2644 3.88322 17.5878 4.04609 17.8742C4.20896 18.1605 4.44277 18.4001 4.72503 18.57L11.1 22.245C11.3847 22.4026 11.7047 22.4853 12.03 22.4853C12.3554 22.4853 12.6754 22.4026 12.96 22.245L19.335 18.57C19.6173 18.4001 19.8511 18.1605 20.014 17.8742C20.1768 17.5878 20.2633 17.2644 20.265 16.935V12.675L22.125 11.58V15.66H24V9.41999ZM18.405 16.92L12 20.61L5.67002 16.935V13.83L11.04 17.025C11.3324 17.1921 11.6633 17.2799 12 17.2799C12.3368 17.2799 12.6677 17.1921 12.96 17.025L18.39 13.785L18.405 16.92ZM12 15.405L1.87502 9.40499L12 3.38999L22.125 9.38999L12 15.405Z" fill="#6C63FF" />
+                            </g>
+                            <defs>
+                                <clipPath id="clip0_62_174">
+                                    <rect width="24" height="24" fill="white" />
+                                </clipPath>
+                            </defs>
+                        </svg>
                         <span>{{ note.university }}</span>
                     </div>
                     <div class="meta-item">
-                        <div class="user-icon-small"></div>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="#6C63FF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
                         <span>{{ note.teacher }}</span>
                     </div>
                     <div class="meta-item">
-                        <div class="calendar-icon-small"></div>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 2V6M8 2V6M3 10H21M5 4H19C20.1046 4 21 4.89543 21 6V20C21 21.1046 20.1046 22 19 22H5C3.89543 22 3 21.1046 3 20V6C3 4.89543 3.89543 4 5 4Z" stroke="#6C63FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
                         <span>{{ formatDate(note.uploadedAt) }}</span>
                     </div>
                 </div>
+            </div>
 
-                <div class="description-block">
-                    <h3>Описание</h3>
-                    <p>{{ note.description }}</p>
-                </div>
+            <!-- Основной контент -->
+            <div class="content" v-if="note.id">
+                <!-- Левая колонка -->
+                <div class="main-column">
+                    <!-- Описание -->
+                    <div class="description-block">
+                        <h3>Описание</h3>
+                        <p>{{ note.description }}</p>
+                    </div>
 
-                <div class="file-block">
-                    <h3>Файл конспекта</h3>
-                    <div class="file-card">
-                        <div class="file-icon-large"></div>
-                        <div class="file-info">
-                            <div class="file-name">{{ getFileName(note.filePath) }}</div>
-                            <div class="file-type">PDF файл</div>
+                    <!-- Файл конспекта -->
+                    <div class="file-block">
+                        <h3>Файл конспекта</h3>
+                        <div class="file-card">
+                            <div class="file-icon-large"></div>
+                            <div class="file-info">
+                                <div class="file-name">{{ getFileName(note.filePath) }}</div>
+                                <div class="file-type">PDF файл</div>
+                                <div class="file-buttons">
+                                    <button class="view-file-btn" @click="viewFile">
+                                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M23.5 17.5C27.642 17.5 31 21.5 31 23.5C31 25.5 27.642 29.5 23.5 29.5C19.358 29.5 16 25.5 16 23.5C16 21.5 19.358 17.5 23.5 17.5ZM24.5 3C25.6935 3 26.8381 3.47411 27.682 4.31802C28.5259 5.16193 29 6.30653 29 7.5V17.964C28.3804 17.4931 27.7095 17.0938 27 16.774V11H5V24.5C5 25.163 5.26339 25.7989 5.73223 26.2678C6.20107 26.7366 6.83696 27 7.5 27H15.942C16.5209 27.753 17.1975 28.4256 17.954 29H7.5C6.30653 29 5.16193 28.5259 4.31802 27.682C3.47411 26.8381 3 25.6935 3 24.5V7.5C3 6.30653 3.47411 5.16193 4.31802 4.31802C5.16193 3.47411 6.30653 3 7.5 3H24.5ZM23.5 19.5C22.4391 19.5 21.4217 19.9214 20.6716 20.6716C19.9214 21.4217 19.5 22.4391 19.5 23.5C19.5 24.5609 19.9214 25.5783 20.6716 26.3284C21.4217 27.0786 22.4391 27.5 23.5 27.5C24.5609 27.5 25.5783 27.0786 26.3284 26.3284C27.0786 25.5783 27.5 24.5609 27.5 23.5C27.5 22.4391 27.0786 21.4217 26.3284 20.6716C25.5783 19.9214 24.5609 19.5 23.5 19.5ZM23.5 21C24.163 21 24.7989 21.2634 25.2678 21.7322C25.7366 22.2011 26 22.837 26 23.5C26 24.163 25.7366 24.7989 25.2678 25.2678C24.7989 25.7366 24.163 26 23.5 26C22.837 26 22.2011 25.7366 21.7322 25.2678C21.2634 24.7989 21 24.163 21 23.5C21 22.837 21.2634 22.2011 21.7322 21.7322C22.2011 21.2634 22.837 21 23.5 21ZM7.5 5C6.83696 5 6.20107 5.26339 5.73223 5.73223C5.26339 6.20107 5 6.83696 5 7.5V9H27V7.5C27 6.83696 26.7366 6.20107 26.2678 5.73223C25.7989 5.26339 25.163 5 24.5 5H7.5Z" fill="white" />
+                                        </svg>
+                                        Посмотреть файл
+                                    </button>
+                                    <button class="download-file-btn" @click="downloadFile">
+                                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M15.9999 21.3333L9.33325 14.6666L11.1999 12.7333L14.6666 16.2V5.33331H17.3333V16.2L20.7999 12.7333L22.6666 14.6666L15.9999 21.3333ZM7.99992 26.6666C7.26659 26.6666 6.63881 26.4055 6.11659 25.8833C5.59436 25.3611 5.33325 24.7333 5.33325 24V20H7.99992V24H23.9999V20H26.6666V24C26.6666 24.7333 26.4055 25.3611 25.8833 25.8833C25.361 26.4055 24.7333 26.6666 23.9999 26.6666H7.99992Z" fill="white" />
+                                        </svg>
+                                        Скачать конспект
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <button class="view-file-btn" @click="viewFile">Посмотреть файл</button>
-                        <button class="download-file-btn" @click="downloadFile">Скачать конспект</button>
+                    </div>
+                </div>
+
+                <!-- Правая колонка -->
+                <div class="side-column">
+                    <!-- Рейтинг -->
+                    <div class="rating-block">
+                        <div class="rating-header">
+                            <h3>Рейтинг</h3>
+                        </div>
+                        <div class="rating-value">{{ note.rating }}</div>
+                        <div class="rating-stars-filled">
+                            <span v-for="star in 10" :key="'filled-' + star" class="star-filled" :class="{ active: star <= note.rating }"></span>
+                        </div>
+                        <div class="downloads-count">{{ note.downloadsCount }} скачиваний</div>
+                        <div class="rating-line"></div>
+                        <div class="rating-text">Оцените конспект</div>
+                        <div class="rating-stars-empty">
+                            <span v-for="star in 10" :key="'empty-' + star" class="star-empty" :class="{ active: star <= tempRating }" @click="rateNote(star)"></span>
+                        </div>
+                    </div>
+
+                    <!-- Пожаловаться и Сообщить о проблеме -->
+                    <div class="complaint-block">
+                        <div class="complaint-label">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 14V20C7 20.2833 6.904 20.521 6.712 20.713C6.52 20.905 6.28267 21.0007 6 21C5.71733 20.9993 5.48 20.9033 5.288 20.712C5.096 20.5207 5 20.2833 5 20V5C5 4.71667 5.096 4.47933 5.288 4.288C5.48 4.09667 5.71733 4.00067 6 4H13.175C13.4083 4 13.6167 4.075 13.8 4.225C13.9833 4.375 14.1 4.56667 14.15 4.8L14.4 6H19C19.2833 6 19.521 6.096 19.713 6.288C19.905 6.48 20.0007 6.71733 20 7V15C20 15.2833 19.904 15.521 19.712 15.713C19.52 15.905 19.2827 16.0007 19 16H13.825C13.5917 16 13.3833 15.925 13.2 15.775C13.0167 15.625 12.9 15.4333 12.85 15.2L12.6 14H7Z" fill="white" />
+                            </svg>
+                            <span>Пожаловаться</span>
+                        </div>
+                        <button class="report-btn" @click="openComplaintModal">Сообщить о проблеме</button>
                     </div>
                 </div>
             </div>
 
-            <div class="side-column">
-                <div class="rating-block">
-                    <div class="rating-header">
-                        <h3>Рейтинг</h3>
-                        <span class="rating-value">{{ note.rating }}</span>
-                    </div>
-                    <div class="rating-stars">
-                        <span v-for="star in 5"
-                              :key="star"
-                              class="star"
-                              :class="{ filled: star <= Math.floor(note.rating / 2) }"
-                              @click="rateNote(star * 2)"></span>
-                    </div>
-                    <p class="rating-text">Оцените конспект</p>
-                    <div class="downloads-count">{{ note.downloadsCount }} скачиваний</div>
-                    <div class="rating-line"></div>
-                </div>
-
-                <div class="complaint-block">
-                    <div class="complaint-label">
-                        <div class="flag-icon"></div>
-                        <span>Пожаловаться</span>
-                    </div>
-                    <button class="report-btn" @click="openComplaintModal">Сообщить о проблеме</button>
-                </div>
+            <div v-else class="loading">
+                <p>Загрузка...</p>
             </div>
-        </div>
-
-        <div v-else class="loading">
-            <p>Загрузка...</p>
         </div>
 
         <!-- Модальное окно жалобы -->
         <div v-if="showComplaintModal" class="modal-overlay" @click.self="closeComplaintModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="flag-icon"></div>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 14V20C7 20.2833 6.904 20.521 6.712 20.713C6.52 20.905 6.28267 21.0007 6 21C5.71733 20.9993 5.48 20.9033 5.288 20.712C5.096 20.5207 5 20.2833 5 20V5C5 4.71667 5.096 4.47933 5.288 4.288C5.48 4.09667 5.71733 4.00067 6 4H13.175C13.4083 4 13.6167 4.075 13.8 4.225C13.9833 4.375 14.1 4.56667 14.15 4.8L14.4 6H19C19.2833 6 19.521 6.096 19.713 6.288C19.905 6.48 20.0007 6.71733 20 7V15C20 15.2833 19.904 15.521 19.712 15.713C19.52 15.905 19.2827 16.0007 19 16H13.825C13.5917 16 13.3833 15.925 13.2 15.775C13.0167 15.625 12.9 15.4333 12.85 15.2L12.6 14H7Z" fill="#6C63FF" />
+                    </svg>
                     <h2>Пожаловаться на конспект</h2>
                     <div class="flag-bg"></div>
                 </div>
@@ -135,10 +176,7 @@
                             <span class="chevron-down"></span>
                         </div>
                         <div v-if="isReasonOpen" class="select-dropdown">
-                            <div v-for="reason in complaintReasons"
-                                 :key="reason"
-                                 class="select-option"
-                                 @click="selectReason(reason)">
+                            <div v-for="reason in complaintReasons" :key="reason" class="select-option" @click="selectReason(reason)">
                                 {{ reason }}
                             </div>
                         </div>
@@ -157,6 +195,7 @@
             </div>
         </div>
 
+        <!-- Уведомление об успешной отправке -->
         <div v-if="showNotification" class="notification">
             <div class="notification-content">
                 <div class="check-icon"></div>
@@ -178,6 +217,7 @@
     const authStore = useAuthStore()
 
     const isMenuOpen = ref(false)
+    const tempRating = ref(0)
 
     const note = ref({
         id: null,
@@ -200,33 +240,12 @@
     const showNotification = ref(false)
     let notificationTimeout = null
 
-    // Сохранение в историю просмотров (localStorage)
-    const saveToHistory = (noteData) => {
-        const history = JSON.parse(localStorage.getItem('downloadHistory') || '[]')
-        const existingIndex = history.findIndex(item => item.id === noteData.id)
-        if (existingIndex !== -1) {
-            history.splice(existingIndex, 1)
-        }
-        history.unshift({
-            id: noteData.id,
-            title: noteData.title,
-            subject: noteData.subject,
-            teacher: noteData.teacher,
-            university: noteData.university,
-            rating: noteData.rating,
-            downloadsCount: noteData.downloadsCount,
-            downloadedAt: new Date().toISOString()
-        })
-        if (history.length > 20) history.pop()
-        localStorage.setItem('downloadHistory', JSON.stringify(history))
-    }
-
     const loadNote = async () => {
         try {
             const id = route.params.id
             const response = await api.get(`/notes/${id}`)
             note.value = response.data
-            saveToHistory(note.value)
+            tempRating.value = note.value.rating
         } catch (error) {
             console.error('Ошибка загрузки конспекта:', error)
         }
@@ -301,6 +320,7 @@
     }
 
     const rateNote = async (rating) => {
+        tempRating.value = rating
         try {
             await api.post(`/notes/${note.value.id}/rate`, { rating })
             note.value.rating = rating
@@ -373,16 +393,35 @@
 <style scoped>
     .note-details-page {
         min-height: 100vh;
-        background: #0A0A0F;
-        padding: 32px 80px;
+        background: #0F0F14;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
+    /* Шапка */
     .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 40px;
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 56px 80px 0 80px; /* Изменено: верхний отступ 56px, убран нижний margin */
+        margin-bottom: 0; /* Убран margin-bottom */
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .back-button {
+        cursor: pointer;
+        width: 49px;
+        height: 49px;
     }
 
     .logo-area {
@@ -463,37 +502,28 @@
             border-top: 1px solid #2A2A35;
         }
 
-    .back-button {
-        cursor: pointer;
-        margin-bottom: 24px;
-        width: 49px;
-    }
-
-    .content {
+    .content-wrapper {
         display: flex;
-        gap: 40px;
+        flex-direction: column;
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        margin-top: 28px; /* Добавлен отступ сверху для контента (133px - 56px шапки - 49px высота кнопки назад = 28px) */
     }
 
-    .main-column {
-        flex: 1;
-    }
-
-    .side-column {
-        width: 340px;
-    }
-
-    .loading {
-        text-align: center;
-        padding: 100px;
-        color: #FFFFFF;
-        font-size: 24px;
+    /* Заголовок и мета-информация */
+    .note-header {
+        width: 800px;
+        margin-left: 187px;
+        margin-bottom: 32px;
     }
 
     .note-title {
         font-size: 36px;
         font-weight: 700;
         color: #FFFFFF;
-        margin-bottom: 24px;
+        margin-bottom: 16px;
+        text-align: left;
     }
 
     .note-meta {
@@ -512,34 +542,34 @@
         color: #A0A0B0;
     }
 
-    .book-icon-small {
-        width: 24px;
-        height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="1.6"%3E%3Cpath d="M4 6h16v12H4z"/%3E%3Cpath d="M8 6v12"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
+    /* Основные колонки */
+    .content {
+        display: flex;
+        justify-content: flex-start;
+        gap: 0;
+        width: 100%;
     }
 
-    .uni-icon-small {
-        width: 24px;
-        height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="1.6"%3E%3Cpath d="M12 3L2 9l10 6 10-6-10-6zM2 9v6l10 6 10-6V9"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
+    /* Левая колонка (800px, отступ слева 187px) */
+    .main-column {
+        width: 800px;
+        margin-left: 187px;
     }
 
-    .user-icon-small {
-        width: 24px;
-        height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="1.6"%3E%3Ccircle cx="12" cy="8" r="4"/%3E%3Cpath d="M5 20v-2a7 7 0 0 1 14 0v2"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
+    /* Правая колонка (339px, отступ от левой колонки 33px) */
+    .side-column {
+        width: 339px;
+        margin-left: 33px;
     }
 
-    .calendar-icon-small {
-        width: 24px;
-        height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="1.6"%3E%3Crect x="3" y="4" width="18" height="18" rx="2" ry="2"/%3E%3Cline x1="16" y1="2" x2="16" y2="6"/%3E%3Cline x1="8" y1="2" x2="8" y2="6"/%3E%3Cline x1="3" y1="10" x2="21" y2="10"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
+    .loading {
+        text-align: center;
+        padding: 100px;
+        color: #FFFFFF;
+        font-size: 24px;
     }
 
+    /* Описание */
     .description-block {
         background: #1A1A22;
         border: 1px solid #2A2A35;
@@ -561,6 +591,7 @@
             color: #DFDFEA;
         }
 
+    /* Файл конспекта */
     .file-block h3 {
         font-size: 20px;
         font-weight: 700;
@@ -574,7 +605,7 @@
         border-radius: 16px;
         padding: 24px;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 24px;
         flex-wrap: wrap;
     }
@@ -605,105 +636,94 @@
         font-size: 16px;
         font-weight: 500;
         color: #A0A0B0;
+        margin-bottom: 16px;
+    }
+
+    .file-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+        margin-top: 8px;
     }
 
     .view-file-btn, .download-file-btn {
-        padding: 14px 28px;
+        width: 100%;
+        height: 56px;
+        padding: 0;
         border-radius: 14px;
         font-size: 20px;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s;
-    }
-
-    .view-file-btn {
-        background: #6C63FF;
-        border: none;
-        color: #FFFFFF;
-    }
-
-        .view-file-btn:hover {
-            background: #594FFE;
-            transform: translateY(-2px);
-        }
-
-    .download-file-btn {
-        background: #6C63FF;
-        border: none;
-        color: #FFFFFF;
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
+        gap: 12px;
+        background: #6C63FF;
+        border: none;
+        color: #FFFFFF;
     }
 
-        .download-file-btn::before {
-            content: '';
-            width: 24px;
-            height: 24px;
-            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"%3E%3Cpath d="M12 16l-4-4h3V4h2v8h3l-4 4zM5 20h14v-2H5v2z"/%3E%3C/svg%3E') no-repeat center;
-            background-size: contain;
-        }
-
-        .download-file-btn:hover {
+        .view-file-btn:hover, .download-file-btn:hover {
             background: #594FFE;
             transform: translateY(-2px);
         }
 
+        .view-file-btn svg, .download-file-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+    /* Рейтинг */
     .rating-block {
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 16px;
         padding: 24px;
         margin-bottom: 24px;
+        text-align: center;
     }
 
-    .rating-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
+    .rating-header h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #FFFFFF;
+        text-align: left;
         margin-bottom: 16px;
     }
 
-        .rating-header h3 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #FFFFFF;
-        }
-
     .rating-value {
-        font-size: 36px;
+        font-size: 48px;
         font-weight: 700;
         color: #FFFFFF;
+        text-align: center;
+        margin-bottom: 12px;
     }
 
-    .rating-stars {
+    .rating-stars-filled {
         display: flex;
+        justify-content: center;
         gap: 8px;
         margin-bottom: 12px;
     }
 
-    .star {
-        width: 32px;
-        height: 32px;
+    .star-filled {
+        width: 17px;
+        height: 17px;
         background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23686D88" stroke-width="1.5"%3E%3Cpolygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9 12 2"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
-        cursor: pointer;
     }
 
-        .star.filled {
+        .star-filled.active {
             background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFE100"%3E%3Cpolygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9 12 2"/%3E%3C/svg%3E') no-repeat center;
             background-size: contain;
         }
 
-    .rating-text {
-        font-size: 16px;
-        color: #A0A0B0;
-        margin-bottom: 16px;
-    }
-
     .downloads-count {
         font-size: 16px;
         color: #A0A0B0;
+        text-align: center;
         margin-bottom: 16px;
     }
 
@@ -713,31 +733,62 @@
         margin: 16px 0;
     }
 
+    .rating-text {
+        font-size: 16px;
+        color: #A0A0B0;
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    .rating-stars-empty {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .star-empty {
+        width: 24px;
+        height: 24px;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23686D88" stroke-width="1.5"%3E%3Cpolygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9 12 2"/%3E%3C/svg%3E') no-repeat center;
+        background-size: contain;
+        cursor: pointer;
+        transition: all 0.1s;
+    }
+
+        .star-empty.active {
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFE100"%3E%3Cpolygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9 12 2"/%3E%3C/svg%3E') no-repeat center;
+            background-size: contain;
+        }
+
+        .star-empty:hover {
+            transform: scale(1.1);
+        }
+
+    /* Пожаловаться */
     .complaint-block {
+        background: #1A1A22;
+        border: 1px solid #2A2A35;
+        border-radius: 16px;
+        padding: 24px;
         display: flex;
         flex-direction: column;
         gap: 16px;
+        align-items: flex-start;
     }
 
     .complaint-label {
         display: flex;
         align-items: center;
+        justify-content: flex-start;
         gap: 8px;
         cursor: default;
     }
 
-    .flag-icon {
-        width: 24px;
-        height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23FFFFFF" stroke-width="2"%3E%3Cpath d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/%3E%3Cline x1="4" y1="22" x2="4" y2="15"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
-    }
-
-    .complaint-label span {
-        font-size: 20px;
-        font-weight: 500;
-        color: #FFFFFF;
-    }
+        .complaint-label span {
+            font-size: 20px;
+            font-weight: 500;
+            color: #FFFFFF;
+        }
 
     .report-btn {
         background: #6C63FF;
@@ -750,6 +801,7 @@
         cursor: pointer;
         transition: all 0.2s;
         text-align: center;
+        width: 100%;
     }
 
         .report-btn:hover {
@@ -757,6 +809,7 @@
             transform: translateY(-2px);
         }
 
+    /* Модальное окно */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -862,6 +915,8 @@
         border-radius: 12px;
         margin-top: 8px;
         z-index: 100;
+        max-height: 200px;
+        overflow-y: auto;
     }
 
     .select-option {
@@ -932,6 +987,7 @@
             transform: translateY(-2px);
         }
 
+    /* Уведомление */
     .notification {
         position: fixed;
         bottom: 30px;
@@ -984,21 +1040,36 @@
     }
 
     @media (max-width: 1100px) {
-        .note-details-page {
-            padding: 20px 40px;
+        .header {
+            padding: 0 40px;
         }
 
-        .content {
-            flex-direction: column;
+        .note-header,
+        .main-column {
+            width: 100%;
+            margin-left: 0;
+            padding: 0 40px;
         }
 
         .side-column {
             width: 100%;
+            margin-left: 0;
+            padding: 0 40px;
+        }
+
+        .content {
+            flex-direction: column;
+            align-items: center;
         }
 
         .file-card {
             flex-direction: column;
+            align-items: center;
             text-align: center;
+        }
+
+        .file-buttons {
+            align-items: center;
         }
 
         .modal-content {
@@ -1010,6 +1081,19 @@
     @media (max-width: 768px) {
         .note-details-page {
             padding: 16px;
+        }
+
+        .header {
+            padding: 0 16px;
+        }
+
+        .note-header,
+        .main-column {
+            padding: 0 16px;
+        }
+
+        .side-column {
+            padding: 0 16px;
         }
 
         .note-title {
@@ -1030,17 +1114,13 @@
         }
 
         .rating-value {
-            font-size: 28px;
+            font-size: 36px;
         }
 
-        .star {
-            width: 28px;
-            height: 28px;
-        }
-
-        .complaint-btn, .report-btn {
-            font-size: 16px;
-            padding: 10px;
+        .star-filled,
+        .star-empty {
+            width: 20px;
+            height: 20px;
         }
 
         .modal-header h2 {

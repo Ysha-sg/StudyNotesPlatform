@@ -1,5 +1,21 @@
 [
   {
+    "ContainingType": "Program\u002B\u003C\u003Ec",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_7",
+    "RelativePath": "",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "StudyNotesPlatform.Controllers.AuthController",
     "Method": "Login",
     "RelativePath": "api/Auth/login",
@@ -167,6 +183,43 @@
   },
   {
     "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "CreateComplaint",
+    "RelativePath": "api/Notes/{id}/complaints",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "StudyNotesPlatform.Controllers.CreateComplaintModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "DownloadNoteFile",
+    "RelativePath": "api/Notes/{id}/download",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
     "Method": "ToggleFavorite",
     "RelativePath": "api/Notes/{id}/favorite",
     "HttpMethod": "POST",
@@ -176,6 +229,112 @@
       {
         "Name": "id",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 201
+      },
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 404
+      }
+    ]
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "RemoveFavorite",
+    "RelativePath": "api/Notes/{id}/favorite",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 404
+      }
+    ]
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "ViewNoteFile",
+    "RelativePath": "api/Notes/{id}/file",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "RateNote",
+    "RelativePath": "api/Notes/{id}/rate",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "StudyNotesPlatform.Controllers.RateNoteModel",
         "IsRequired": true
       }
     ],
@@ -195,6 +354,79 @@
         "IsRequired": false
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "GetComplaints",
+    "RelativePath": "api/Notes/complaints",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "status",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "GetComplaintDetails",
+    "RelativePath": "api/Notes/complaints/{complaintId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "complaintId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "ResolveComplaint",
+    "RelativePath": "api/Notes/complaints/{complaintId}/resolve",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "complaintId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "StudyNotesPlatform.Controllers.ResolveComplaintModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "GetMyComplaints",
+    "RelativePath": "api/Notes/complaints/my",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "GetDownloadHistory",
+    "RelativePath": "api/Notes/download-history",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -226,6 +458,26 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "GetModerationHistory",
+    "RelativePath": "api/Notes/moderation/history",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.NotesController",
+    "Method": "GetModerationQueue",
+    "RelativePath": "api/Notes/moderation/pending",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -315,6 +567,37 @@
       {
         "Name": "model",
         "Type": "StudyNotesPlatform.Controllers.UpdateProfileModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.ProfileController",
+    "Method": "GetUsers",
+    "RelativePath": "api/Profile/users",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "StudyNotesPlatform.Controllers.ProfileController",
+    "Method": "SetUserRole",
+    "RelativePath": "api/Profile/users/{userId}/role",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "StudyNotesPlatform.Controllers.UpdateUserRoleModel",
         "IsRequired": true
       }
     ],

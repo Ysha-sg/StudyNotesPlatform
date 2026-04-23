@@ -64,6 +64,7 @@ wwwroot\lib\jquery\dist\jquery.slim.min.map
 wwwroot\lib\jquery\LICENSE.txt
 wwwroot\uploads\8bcf034a-36f5-4718-9c93-da7585fa8bf1_Лабораторка 5.pdf
 wwwroot\uploads\9588aa87-6650-47f5-b6ee-ab2cca83eeb7_Практическое занятие 4.pdf
+wwwroot\uploads\fae79f58-5510-43e1-97ac-7d08898081b1_Лабораторка 4.pdf
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\wwwroot\css\site.css
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\wwwroot\favicon.ico
 C:\Users\user\Desktop\Учеба\Хакатон типо\StudyNotesPlatform\wwwroot\js\auth.js

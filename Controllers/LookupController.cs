@@ -24,7 +24,7 @@ public class LookupController : ControllerBase
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         var user = await _context.Users.FindAsync(userId);
-        if (user == null) return Unauthorized();
+        if (user == null) return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Требуется авторизация", detail: "Пользователь из токена не найден.");
 
         var subjects = await _context.Subjects
             .Where(s => s.UniversityId == user.UniversityId)
@@ -40,7 +40,7 @@ public class LookupController : ControllerBase
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         var user = await _context.Users.FindAsync(userId);
-        if (user == null) return Unauthorized();
+        if (user == null) return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Требуется авторизация", detail: "Пользователь из токена не найден.");
 
         var teachers = await _context.Teachers
             .Where(t => t.UniversityId == user.UniversityId)

@@ -24,6 +24,8 @@ public class ApplicationDbContext : DbContext
 
     // DbSet для избранного
     public DbSet<Favorite> Favorites { get; set; }
+    public DbSet<Complaint> Complaints { get; set; }
+    public DbSet<NoteRating> NoteRatings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -204,6 +206,68 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => new { e.UserId, e.NoteId }).IsUnique();
+        });
+
+        // Complaints (жалобы)
+        modelBuilder.Entity<Complaint>(entity =>
+        {
+            entity.ToTable("complaints");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.NoteId).HasColumnName("note_id");
+            entity.Property(e => e.ReporterId).HasColumnName("reporter_id");
+            entity.Property(e => e.Reason).HasColumnName("reason");
+            entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.ResolvedAt).HasColumnName("resolved_at");
+            entity.Property(e => e.ResolvedById).HasColumnName("resolved_by_id");
+            entity.Property(e => e.ResolutionComment).HasColumnName("resolution_comment");
+
+            entity.HasOne(e => e.Note)
+                .WithMany()
+                .HasForeignKey(e => e.NoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Reporter)
+                .WithMany()
+                .HasForeignKey(e => e.ReporterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.ResolvedBy)
+                .WithMany()
+                .HasForeignKey(e => e.ResolvedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.NoteId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => new { e.NoteId, e.ReporterId, e.Status });
+        });
+
+        // NoteRatings (оценки)
+        modelBuilder.Entity<NoteRating>(entity =>
+        {
+            entity.ToTable("note_ratings");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.NoteId).HasColumnName("note_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Rating).HasColumnName("rating");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+
+            entity.HasOne(e => e.Note)
+                .WithMany()
+                .HasForeignKey(e => e.NoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.NoteId, e.UserId }).IsUnique();
+            entity.HasIndex(e => e.NoteId);
         });
     }
 }

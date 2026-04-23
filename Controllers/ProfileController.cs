@@ -17,6 +17,11 @@ public class UpdateProfileModel
     public string? NewPassword { get; set; }
 }
 
+public class UpdateUserRoleModel
+{
+    public string RoleCode { get; set; } = string.Empty;
+}
+
 [ApiController]
 [Route("api/[controller]")]
 [Authorize] // требует аутентификации для всех методов
@@ -39,7 +44,7 @@ public class ProfileController : ControllerBase
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == userId);
 
-        if (user == null) return NotFound();
+        if (user == null) return Problem(statusCode: StatusCodes.Status404NotFound, title: "Пользователь не найден");
 
         return Ok(new
         {
@@ -59,7 +64,7 @@ public class ProfileController : ControllerBase
         var user = await _context.Users.FindAsync(userId);
 
         if (user == null)
-            return NotFound(new { message = "Пользователь не найден" });
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Пользователь не найден");
 
         // Обновляем имя
         if (!string.IsNullOrWhiteSpace(model.FullName))
@@ -72,7 +77,7 @@ public class ProfileController : ControllerBase
                 .FirstOrDefaultAsync(u => u.Email == model.Email);
 
             if (existingUser != null)
-                return BadRequest(new { message = "Пользователь с таким email уже существует" });
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Пользователь с таким email уже существует");
 
             user.Email = model.Email;
         }
@@ -84,7 +89,7 @@ public class ProfileController : ControllerBase
                 .FindAsync(model.UniversityId.Value);
 
             if (university == null)
-                return BadRequest(new { message = "Университет не найден" });
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Университет не найден");
 
             user.UniversityId = model.UniversityId.Value;
         }
@@ -93,7 +98,7 @@ public class ProfileController : ControllerBase
         if (!string.IsNullOrWhiteSpace(model.NewPassword))
         {
             if (model.NewPassword.Length < 6)
-                return BadRequest(new { message = "Пароль должен быть не менее 6 символов" });
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Пароль должен быть не менее 6 символов");
 
             user.PasswordHash = HashPassword(model.NewPassword);
         }
@@ -119,7 +124,71 @@ public class ProfileController : ControllerBase
     [Authorize(Roles = "admin")]
     public IActionResult AdminZone()
     {
-        return Ok("Только для администратора");
+        return Ok(new { message = "Только для администратора" });
+    }
+
+    // GET: api/profile/users - список пользователей для управления ролями
+    [HttpGet("users")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> GetUsers()
+    {
+        var users = await _context.Users
+            .Include(u => u.Role)
+            .Include(u => u.University)
+            .OrderBy(u => u.Id)
+            .Select(u => new
+            {
+                u.Id,
+                u.FullName,
+                u.Email,
+                Role = u.Role != null ? u.Role.Code : "",
+                University = u.University != null ? u.University.Name : ""
+            })
+            .ToListAsync();
+
+        return Ok(users);
+    }
+
+    // POST: api/profile/users/{userId}/role - назначение роли пользователю
+    [HttpPost("users/{userId:int}/role")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> SetUserRole(int userId, [FromBody] UpdateUserRoleModel model)
+    {
+        if (string.IsNullOrWhiteSpace(model.RoleCode))
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Укажите код роли");
+        }
+
+        var normalizedRoleCode = model.RoleCode.Trim().ToLowerInvariant();
+        if (normalizedRoleCode != "student" && normalizedRoleCode != "moderator" && normalizedRoleCode != "admin")
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Недопустимая роль", detail: "Допустимые роли: student, moderator, admin.");
+        }
+
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Пользователь не найден");
+        }
+
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Code == normalizedRoleCode);
+        if (role == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "Роль не найдена");
+        }
+
+        user.RoleId = role.Id;
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = $"Роль пользователя изменена на '{role.Code}'",
+            user.Id,
+            user.FullName,
+            Role = role.Code
+        });
     }
 
     // Приватный метод для хэширования пароля

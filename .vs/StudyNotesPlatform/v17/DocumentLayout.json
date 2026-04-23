@@ -3,80 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\profile.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\profile.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\notedetails.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\notedetails.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\controllers\\notescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:controllers\\notescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\router\\index.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\router\\index.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\addnote.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\addnote.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\services\\api.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\services\\api.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\stores\\favorites.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\stores\\favorites.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\catalog.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\catalog.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\main.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\main.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\profile.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\profile.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\app.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\app.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\assets\\main.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\assets\\main.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\models\\favorite.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:models\\favorite.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\controllers\\profilecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:controllers\\profilecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\stores\\auth.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\stores\\auth.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\services\\tokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:services\\tokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\models\\authmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:models\\authmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\controllers\\notescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:controllers\\notescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -87,37 +23,32 @@
       "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:controllers\\lookupcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\controllers\\profilecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:controllers\\profilecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\login.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\login.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\moderationdashboard.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\moderationdashboard.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\register.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\register.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\notedetails.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\notedetails.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\assets\\base.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\assets\\base.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\views\\addnote.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\views\\addnote.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\vue-frontend\\src\\router\\index.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:vue-frontend\\src\\router\\index.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\wwwroot\\js\\auth.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:wwwroot\\js\\auth.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\StudyNotesPlatform-main\\Pages\\Program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\StudyNotesPlatform-main\\Pages\\Shared\\_Layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\StudyNotesPlatform-main\\Pages\\Index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|c:\\users\\user\\desktop\\\u0443\u0447\u0435\u0431\u0430\\\u0445\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\studynotesplatform\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8CD8B9E1-63F1-48F4-98C6-6209ED9CA4BB}|StudyNotesPlatform.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -127,7 +58,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 10,
           "Children": [
             {
               "$type": "Bookmark",
@@ -143,107 +74,27 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "favorites.js",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\stores\\favorites.js",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\stores\\favorites.js",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\stores\\favorites.js",
-              "RelativeToolTip": "vue-frontend\\src\\stores\\favorites.js",
-              "ViewState": "AgIAABgAAAAAAAAAAAAgwCwAAAAFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-17T15:01:48.009Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Profile.vue",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Profile.vue",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\Profile.vue",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Profile.vue",
-              "RelativeToolTip": "vue-frontend\\src\\views\\Profile.vue",
-              "ViewState": "AgIAACgEAAAAAAAAAAAQwDYEAAAgAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-04-17T14:02:22.483Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "main.js",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\main.js",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\main.js",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\main.js",
-              "RelativeToolTip": "vue-frontend\\src\\main.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-07T18:14:41.311Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "App.vue",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\App.vue",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\App.vue",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\App.vue",
-              "RelativeToolTip": "vue-frontend\\src\\App.vue",
-              "ViewState": "AgIAABUAAAAAAAAAAAAQwCoAAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-04-07T18:14:51.376Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "AddNote.vue",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\AddNote.vue",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\AddNote.vue",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\AddNote.vue",
-              "RelativeToolTip": "vue-frontend\\src\\views\\AddNote.vue",
-              "ViewState": "AgIAAEkEAAAAAAAAAAAQwF4EAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-04-17T15:42:03.411Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "api.js",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\services\\api.js",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\services\\api.js",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\services\\api.js",
-              "RelativeToolTip": "vue-frontend\\src\\services\\api.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAACAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-07T18:27:36.002Z",
-              "EditorCaption": ""
+              "Title": "LookupController.cs",
+              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\LookupController.cs",
+              "RelativeDocumentMoniker": "Controllers\\LookupController.cs",
+              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\LookupController.cs",
+              "RelativeToolTip": "Controllers\\LookupController.cs",
+              "ViewState": "AgIAAEEAAAAAAAAAAAA1wFQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-23T21:12:25.812Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 5,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Program.cs",
-              "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Program.cs",
-              "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAAQAAAAAAAAAAAAgwFkAAAAXAAAAAAAAAA==",
+              "Title": "ProfileController.cs",
+              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\ProfileController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ProfileController.cs",
+              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\ProfileController.cs",
+              "RelativeToolTip": "Controllers\\ProfileController.cs",
+              "ViewState": "AgIAALUAAAAAAAAAAAAYwMgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-07T18:28:10.71Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "NoteDetails.vue",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\NoteDetails.vue",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\NoteDetails.vue",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\NoteDetails.vue",
-              "RelativeToolTip": "vue-frontend\\src\\views\\NoteDetails.vue",
-              "ViewState": "AgIAAAwEAAAAAAAAAAAQwCEEAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-04-15T10:34:01.173Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-23T21:11:35.006Z"
             },
             {
               "$type": "Document",
@@ -253,265 +104,118 @@
               "RelativeDocumentMoniker": "Controllers\\NotesController.cs",
               "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\NotesController.cs",
               "RelativeToolTip": "Controllers\\NotesController.cs",
-              "ViewState": "AgIAAMoBAAAAAAAAAAAgwN4BAAABAAAAAAAAAA==",
+              "ViewState": "AgIAANEBAAAAAAAAAAAgwOYBAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-15T14:07:58.016Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-23T21:11:32.813Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 6,
+              "Title": "ModerationDashboard.vue",
+              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\ModerationDashboard.vue",
+              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\ModerationDashboard.vue",
+              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\ModerationDashboard.vue",
+              "RelativeToolTip": "vue-frontend\\src\\views\\ModerationDashboard.vue",
+              "ViewState": "AgIAAKcCAAAAAAAAAAAQwNECAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
+              "WhenOpened": "2026-04-23T20:24:22.906Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
               "Title": "index.js",
               "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\router\\index.js",
               "RelativeDocumentMoniker": "vue-frontend\\src\\router\\index.js",
               "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\router\\index.js",
               "RelativeToolTip": "vue-frontend\\src\\router\\index.js",
-              "ViewState": "AgIAABQAAAAAAAAAAAAgwCgAAAAVAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-07T18:15:10.673Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "ApplicationDbContext.cs",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Data\\ApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "Data\\ApplicationDbContext.cs",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Data\\ApplicationDbContext.cs",
-              "RelativeToolTip": "Data\\ApplicationDbContext.cs",
-              "ViewState": "AgIAALwAAAAAAAAAAAAgwNAAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-15T13:59:00.516Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-23T20:19:56.281Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 8,
+              "Title": "AddNote.vue",
+              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\AddNote.vue",
+              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\AddNote.vue",
+              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\AddNote.vue",
+              "RelativeToolTip": "vue-frontend\\src\\views\\AddNote.vue",
+              "ViewState": "AgIAAJ4AAAAAAAAAAAAlwKAAAABDAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
+              "WhenOpened": "2026-04-23T20:18:33.383Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Profile.vue",
+              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Profile.vue",
+              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\Profile.vue",
+              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Profile.vue",
+              "RelativeToolTip": "vue-frontend\\src\\views\\Profile.vue",
+              "ViewState": "AgIAAJABAAAAAAAAAAAQwKUBAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
+              "WhenOpened": "2026-04-23T19:40:19.672Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
               "Title": "Catalog.vue",
               "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Catalog.vue",
               "RelativeDocumentMoniker": "vue-frontend\\src\\views\\Catalog.vue",
               "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Catalog.vue",
               "RelativeToolTip": "vue-frontend\\src\\views\\Catalog.vue",
-              "ViewState": "AgIAANQAAAAAAAAAAAAiwOoAAAAGAAAAAAAAAA==",
+              "ViewState": "AgIAALcCAAAAAAAAAAAQwL4CAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-04-07T18:25:51.75Z",
+              "WhenOpened": "2026-04-23T16:45:21.749Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "main.css",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\assets\\main.css",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\assets\\main.css",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\assets\\main.css",
-              "RelativeToolTip": "vue-frontend\\src\\assets\\main.css",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAQAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
-              "WhenOpened": "2026-04-07T18:40:01.96Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "index.html",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\index.html",
-              "RelativeDocumentMoniker": "vue-frontend\\index.html",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\index.html",
-              "RelativeToolTip": "vue-frontend\\index.html",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAHAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
-              "WhenOpened": "2026-04-17T19:33:33.969Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "ProfileController.cs",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\ProfileController.cs",
-              "RelativeDocumentMoniker": "Controllers\\ProfileController.cs",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\ProfileController.cs",
-              "RelativeToolTip": "Controllers\\ProfileController.cs",
-              "ViewState": "AgIAAHAAAAAAAAAAAAAQwIIAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-15T14:08:32.503Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 18,
-              "Title": "AuthModels.cs",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Models\\AuthModels.cs",
-              "RelativeDocumentMoniker": "Models\\AuthModels.cs",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Models\\AuthModels.cs",
-              "RelativeToolTip": "Models\\AuthModels.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAASAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-27T17:19:53.571Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "Favorite.cs",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Models\\Favorite.cs",
-              "RelativeDocumentMoniker": "Models\\Favorite.cs",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Models\\Favorite.cs",
-              "RelativeToolTip": "Models\\Favorite.cs",
-              "ViewState": "AgIAAAEAAAAAAAAAAAAgwBUAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-17T19:07:56.38Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 3,
               "Title": "AuthController.cs",
               "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\AuthController.cs",
               "RelativeDocumentMoniker": "Controllers\\AuthController.cs",
               "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\AuthController.cs",
               "RelativeToolTip": "Controllers\\AuthController.cs",
-              "ViewState": "AgIAADIAAAAAAAAAAAAqwF4AAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAFkAAAAAAAAAAAAQwGEAAABGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-27T17:23:06.02Z"
+              "WhenOpened": "2026-04-23T21:12:33.125Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
-              "Title": "auth.js",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\stores\\auth.js",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\stores\\auth.js",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\stores\\auth.js",
-              "RelativeToolTip": "vue-frontend\\src\\stores\\auth.js",
-              "ViewState": "AgIAADMAAAAAAAAAAAAgwEIAAAAjAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-07T18:15:29.894Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 20,
-              "Title": "LookupController.cs",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\LookupController.cs",
-              "RelativeDocumentMoniker": "Controllers\\LookupController.cs",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Controllers\\LookupController.cs",
-              "RelativeToolTip": "Controllers\\LookupController.cs",
-              "ViewState": "AgIAADsAAAAAAAAAAAAAwFMAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-15T14:07:37.959Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 17,
-              "Title": "TokenService.cs",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Services\\TokenService.cs",
-              "RelativeDocumentMoniker": "Services\\TokenService.cs",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Services\\TokenService.cs",
-              "RelativeToolTip": "Services\\TokenService.cs",
-              "ViewState": "AgIAACEAAAAAAAAAAAAiwCwAAAA2AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-27T17:21:09.051Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 23,
-              "Title": "Register.vue",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Register.vue",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\Register.vue",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Register.vue",
-              "RelativeToolTip": "vue-frontend\\src\\views\\Register.vue",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAASAAAAAAAAAA==",
+              "DocumentIndex": 7,
+              "Title": "NoteDetails.vue",
+              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\NoteDetails.vue",
+              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\NoteDetails.vue",
+              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\NoteDetails.vue",
+              "RelativeToolTip": "vue-frontend\\src\\views\\NoteDetails.vue",
+              "ViewState": "AgIAABUAAAAAAAAAAAAAABwAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-04-07T18:26:09.791Z"
+              "WhenOpened": "2026-04-23T16:58:40.024Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 22,
-              "Title": "Login.vue",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Login.vue",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\views\\Login.vue",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\views\\Login.vue",
-              "RelativeToolTip": "vue-frontend\\src\\views\\Login.vue",
-              "ViewState": "AgIAAE4BAAAAAAAAAAAQwHIBAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
-              "WhenOpened": "2026-04-07T18:25:53.366Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 21,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\appsettings.json",
-              "RelativeDocumentMoniker": "appsettings.json",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\appsettings.json",
-              "RelativeToolTip": "appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-03-27T17:13:28.155Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 24,
-              "Title": "base.css",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\assets\\base.css",
-              "RelativeDocumentMoniker": "vue-frontend\\src\\assets\\base.css",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\vue-frontend\\src\\assets\\base.css",
-              "RelativeToolTip": "vue-frontend\\src\\assets\\base.css",
+              "DocumentIndex": 10,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "Properties\\launchSettings.json",
+              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Properties\\launchSettings.json",
+              "RelativeToolTip": "Properties\\launchSettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
-              "WhenOpened": "2026-04-07T18:40:00.434Z"
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-23T16:55:19.148Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 27,
+              "DocumentIndex": 11,
               "Title": "Program.cs",
-              "DocumentMoniker": "D:\\StudyNotesPlatform-main\\Pages\\Program.cs",
-              "ToolTip": "D:\\StudyNotesPlatform-main\\Pages\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAgAAAAAAAAAA==",
+              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAJcAAAAAAAAAAAAgwKUAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-04T08:09:29.817Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 25,
-              "Title": "User.cs",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Models\\User.cs",
-              "RelativeDocumentMoniker": "Models\\User.cs",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\Models\\User.cs",
-              "RelativeToolTip": "Models\\User.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-27T17:19:36.889Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 28,
-              "Title": "_Layout.cshtml",
-              "DocumentMoniker": "D:\\StudyNotesPlatform-main\\Pages\\Shared\\_Layout.cshtml",
-              "ToolTip": "D:\\StudyNotesPlatform-main\\Pages\\Shared\\_Layout.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAHAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-03-27T17:32:50.42Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 26,
-              "Title": "auth.js",
-              "DocumentMoniker": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\wwwroot\\js\\auth.js",
-              "RelativeDocumentMoniker": "wwwroot\\js\\auth.js",
-              "ToolTip": "C:\\Users\\user\\Desktop\\\u0423\u0447\u0435\u0431\u0430\\\u0425\u0430\u043A\u0430\u0442\u043E\u043D \u0442\u0438\u043F\u043E\\StudyNotesPlatform\\wwwroot\\js\\auth.js",
-              "RelativeToolTip": "wwwroot\\js\\auth.js",
-              "ViewState": "AgIAAC4AAAAAAAAAAADwv5wAAAADAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-03-27T17:30:35.852Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 29,
-              "Title": "Index.cshtml",
-              "DocumentMoniker": "D:\\StudyNotesPlatform-main\\Pages\\Index.cshtml",
-              "ToolTip": "D:\\StudyNotesPlatform-main\\Pages\\Index.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAlAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-03-27T17:33:15.816Z"
+              "WhenOpened": "2026-04-23T16:45:41.397Z"
             }
           ]
         }

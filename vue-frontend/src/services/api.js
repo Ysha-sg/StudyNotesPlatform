@@ -7,6 +7,13 @@ const api = axios.create({
     }
 })
 
+const redirectToLogin = () => {
+    const currentPath = window.location.pathname + window.location.search + window.location.hash
+    const safePath = currentPath.startsWith('/') ? currentPath : '/'
+    const encoded = encodeURIComponent(safePath)
+    window.location.href = `/login?redirect=${encoded}`
+}
+
 // Перехватчик запросов — добавляем токен авторизации
 api.interceptors.request.use(
     (config) => {
@@ -47,12 +54,12 @@ api.interceptors.response.use(
                 } catch (refreshError) {
                     // Если не удалось обновить токен — разлогиниваем
                     localStorage.clear()
-                    window.location.href = '/login'
+                    redirectToLogin()
                     return Promise.reject(refreshError)
                 }
             } else {
                 localStorage.clear()
-                window.location.href = '/login'
+                redirectToLogin()
             }
         }
 

@@ -1,14 +1,23 @@
 ﻿<template>
     <div class="add-note-page">
-        <!-- Шапка -->
-        <div class="header">
-            <div class="logo-area" @click="goToCatalog">
-                <div class="logo-icon">
-                    <svg width="55" height="50" viewBox="0 0 69 69" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M34.5 20.125C34.5 17.075 33.2884 14.1499 31.1317 11.9933C28.9751 9.8366 26.05 8.625 23 8.625H5.75V51.75H25.875C28.1625 51.75 30.3563 52.6587 31.9738 54.2762C33.5913 55.8937 34.5 58.0875 34.5 60.375M34.5 20.125V60.375M34.5 20.125C34.5 17.075 35.7116 14.1499 37.8683 11.9933C40.0249 9.8366 42.95 8.625 46 8.625H63.25V51.75H43.125C40.8375 51.75 38.6437 52.6587 37.0262 54.2762C35.4087 55.8937 34.5 58.0875 34.5 60.375" stroke="#8B7FFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+        <!-- Верхняя панель -->
+        <div class="top-row">
+            <div class="top-left">
+                <button type="button" class="back-button" @click="goBack" aria-label="Назад">
+                    <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="24.5" cy="24.5" r="23" stroke="#A0A0B0" stroke-width="2.5" />
+                        <polyline points="27 17 18 24.5 27 32" stroke="#A0A0B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
+                </button>
+
+                <div class="logo-area" @click="goToCatalog">
+                    <div class="logo-icon">
+                        <svg width="55" height="50" viewBox="0 0 69 69" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M34.5 20.125C34.5 17.075 33.2884 14.1499 31.1317 11.9933C28.9751 9.8366 26.05 8.625 23 8.625H5.75V51.75H25.875C28.1625 51.75 30.3563 52.6587 31.9738 54.2762C33.5913 55.8937 34.5 58.0875 34.5 60.375M34.5 20.125V60.375M34.5 20.125C34.5 17.075 35.7116 14.1499 37.8683 11.9933C40.0249 9.8366 42.95 8.625 46 8.625H63.25V51.75H43.125C40.8375 51.75 38.6437 52.6587 37.0262 54.2762C35.4087 55.8937 34.5 58.0875 34.5 60.375" stroke="#6C63FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <span class="logo-text">Каталог конспектов</span>
                 </div>
-                <span class="logo-text">Каталог конспектов</span>
             </div>
 
             <div class="avatar-menu" @click.stop="toggleMenu">
@@ -34,14 +43,6 @@
             </div>
         </div>
 
-        <!-- Стрелка назад -->
-        <div class="back-button" @click="goBack">
-            <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="24.5" cy="24.5" r="23" stroke="#A0A0B0" stroke-width="2.5" />
-                <polyline points="27 17 18 24.5 27 32" stroke="#A0A0B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-        </div>
-
         <!-- Заголовок -->
         <h1 class="page-title">{{ isEditMode ? 'Редактирование конспекта' : 'Загрузка конспекта' }}</h1>
         <p class="page-subtitle">{{ isEditMode ? 'Измените данные конспекта' : 'Добавьте новый конспект для публикации на платформе' }}</p>
@@ -51,7 +52,7 @@
             <div class="main-form">
                 <!-- Название -->
                 <div class="form-group">
-                    <label>Название конспекта *</label>
+                    <label>Название конспекта <span class="required">*</span></label>
                     <div class="input-wrapper" :class="{ error: errors.title }">
                         <input type="text" v-model="form.title" placeholder="Введение в базы данных" @input="clearError('title')" />
                     </div>
@@ -60,7 +61,7 @@
 
                 <!-- Описание -->
                 <div class="form-group">
-                    <label>Описание *</label>
+                    <label>Описание <span class="required">*</span></label>
                     <div class="input-wrapper" :class="{ error: errors.description }">
                         <textarea v-model="form.description" placeholder="Опишите содержание конспекта, основные темы и разделы..." rows="8" @input="clearError('description')"></textarea>
                     </div>
@@ -69,10 +70,10 @@
 
                 <!-- Предмет -->
                 <div class="form-group">
-                    <label>Предмет *</label>
+                    <label>Предмет <span class="required">*</span></label>
                     <div class="custom-select" :class="{ open: isSubjectOpen, error: errors.subjectId }">
                         <div class="select-trigger" @click="toggleSubjectDropdown">
-                            <span class="select-value">{{ selectedSubjectName || 'Выберите предмет' }}</span>
+                            <span class="select-value" :class="{ placeholder: !selectedSubjectName }">{{ selectedSubjectName || 'Выберите предмет' }}</span>
                             <span class="chevron-icon"></span>
                         </div>
                         <div v-if="isSubjectOpen" class="select-dropdown">
@@ -86,10 +87,10 @@
 
                 <!-- Преподаватель -->
                 <div class="form-group">
-                    <label>Преподаватель *</label>
+                    <label>Преподаватель <span class="required">*</span></label>
                     <div class="custom-select" :class="{ open: isTeacherOpen, error: errors.teacherId }">
                         <div class="select-trigger" @click="toggleTeacherDropdown">
-                            <span class="select-value">{{ selectedTeacherName || 'Выберите преподавателя' }}</span>
+                            <span class="select-value" :class="{ placeholder: !selectedTeacherName }">{{ selectedTeacherName || 'Выберите преподавателя' }}</span>
                             <span class="chevron-icon"></span>
                         </div>
                         <div v-if="isTeacherOpen" class="select-dropdown">
@@ -103,10 +104,10 @@
 
                 <!-- ВУЗ -->
                 <div class="form-group">
-                    <label>ВУЗ *</label>
+                    <label>ВУЗ <span class="required">*</span></label>
                     <div class="custom-select" :class="{ open: isUniversityOpen, error: errors.universityId }">
                         <div class="select-trigger" @click="toggleUniversityDropdown">
-                            <span class="select-value">{{ selectedUniversityName || 'Выберите ВУЗ' }}</span>
+                            <span class="select-value" :class="{ placeholder: !selectedUniversityName }">{{ selectedUniversityName || 'Выберите ВУЗ' }}</span>
                             <span class="chevron-icon"></span>
                         </div>
                         <div v-if="isUniversityOpen" class="select-dropdown">
@@ -120,14 +121,14 @@
 
                 <!-- Загрузка файла (только в режиме добавления) -->
                 <div class="form-group" v-if="!isEditMode">
-                    <label>Загрузка файла *</label>
-                    <div class="drop-zone" :class="{ dragOver: isDragOver, error: errors.file }" @dragover.prevent="isDragOver = true" @dragleave.prevent="isDragOver = false" @drop.prevent="handleDrop" @click="triggerFileInput">
+                    <label>Загрузка файла <span class="required">*</span></label>
+                    <div v-if="!selectedFile" class="drop-zone" :class="{ dragOver: isDragOver, error: errors.file }" @dragover.prevent="isDragOver = true" @dragleave.prevent="isDragOver = false" @drop.prevent="handleDrop" @click="triggerFileInput">
                         <div class="drop-zone-icon"></div>
                         <p>Перетащите файл сюда или выберите с устройства</p>
                         <span>Поддерживаются только PDF файлы</span>
-                        <input type="file" ref="fileInput" accept=".pdf" @change="handleFileSelect" style="display: none" />
                     </div>
-                    <div class="error-message" v-if="errors.file">{{ errors.file }}</div>
+                    <input type="file" ref="fileInput" accept=".pdf" @change="handleFileSelect" style="display: none" />
+                    <div v-if="errors.file" class="error-message">{{ errors.file }}</div>
 
                     <div v-if="selectedFile" class="selected-file">
                         <div class="file-info">
@@ -137,7 +138,7 @@
                                 <div class="file-size">{{ formatFileSize(selectedFile.size) }}</div>
                             </div>
                         </div>
-                        <button class="remove-file" @click="removeFile">
+                        <button type="button" class="remove-file" @click.stop="removeFile" aria-label="Удалить файл">
                             <div class="close-icon"></div>
                         </button>
                     </div>
@@ -149,14 +150,14 @@
                     <div class="current-file">
                         <div class="file-icon-small"></div>
                         <span>{{ getFileName(note.filePath) }}</span>
-                        <a :href="note.filePath" target="_blank" class="view-file-link">Посмотреть</a>
+                        <button type="button" class="view-file-link" @click="viewCurrentFile">Посмотреть</button>
                     </div>
                 </div>
 
                 <!-- Кнопки -->
                 <div class="form-buttons">
-                    <button class="cancel-btn" @click="goBack">Отменить</button>
-                    <button class="submit-btn" @click="submitNote" :disabled="isSubmitting">
+                    <button type="button" class="cancel-btn" @click="goBack">Отменить</button>
+                    <button type="button" class="submit-btn" @click="submitNote" :disabled="isSubmitting">
                         {{ isSubmitting ? 'Сохранение...' : (isEditMode ? 'Сохранить изменения' : 'Отправить на модерацию') }}
                     </button>
                 </div>
@@ -164,7 +165,7 @@
 
             <!-- Правая панель -->
             <div class="info-panel">
-                <div class="info-card">
+                <div class="info-card requirements-card">
                     <div class="info-header">
                         <div class="info-icon requirements-icon"></div>
                         <h3>Требования</h3>
@@ -177,7 +178,7 @@
                     </ul>
                 </div>
 
-                <div class="info-card">
+                <div class="info-card moderation-card">
                     <div class="info-header">
                         <div class="info-icon moderation-icon"></div>
                         <h3>Модерация</h3>
@@ -386,6 +387,50 @@
         return filePath.split('/').pop()
     }
 
+    const redirectToLogin = () => {
+        router.push({
+            path: '/login',
+            query: {
+                redirect: route.fullPath
+            }
+        })
+    }
+
+    const viewCurrentFile = async () => {
+        if (!noteId.value) return
+        if (!authStore.isAuthenticated) {
+            redirectToLogin()
+            return
+        }
+
+        const previewWindow = window.open('', '_blank', 'noopener')
+        if (!previewWindow) {
+            alert('Разрешите всплывающие окна в браузере, чтобы открыть файл')
+            return
+        }
+
+        try {
+            const response = await api.get(`/notes/${noteId.value}/file`, {
+                responseType: 'blob'
+            })
+
+            const blobUrl = URL.createObjectURL(response.data)
+            previewWindow.location.href = blobUrl
+
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl)
+            }, 60_000)
+        } catch (error) {
+            previewWindow.close()
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                redirectToLogin()
+                return
+            }
+            console.error('Ошибка открытия файла:', error)
+            alert('Не удалось открыть файл')
+        }
+    }
+
     const validateForm = () => {
         let isValid = true
 
@@ -576,44 +621,73 @@
 </script>
 
 <style scoped>
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
     .add-note-page {
         min-height: 100vh;
         background: #0F0F14;
-        padding: 32px 80px;
+        padding: 56px 80px 64px;
+        max-width: 1440px;
+        margin: 0 auto;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    .header {
+    .top-row {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 40px;
+        justify-content: space-between;
+        margin-bottom: 24px;
     }
+
+    .top-left {
+        display: flex;
+        align-items: center;
+        gap: 58px;
+    }
+
+    .back-button {
+        width: 49px;
+        height: 49px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+    }
+
+        .back-button svg circle,
+        .back-button svg polyline {
+            transition: stroke 0.2s ease;
+        }
+
+        .back-button:hover svg circle,
+        .back-button:hover svg polyline {
+            stroke: #6C63FF;
+        }
 
     .logo-area {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 7px;
         cursor: pointer;
     }
 
     .logo-icon {
         width: 55px;
         height: 50px;
-        background: #2A2348;
         border-radius: 10px;
+        background: #2A2348;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
-        .logo-icon svg {
-            width: 45px;
-            height: 40px;
-        }
-
     .logo-text {
         font-size: 24px;
+        line-height: 29px;
         font-weight: 700;
         color: #FFFFFF;
     }
@@ -638,7 +712,7 @@
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 14px;
-        box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         z-index: 100;
     }
 
@@ -668,85 +742,112 @@
             border-top: 1px solid #2A2A35;
         }
 
-    .back-button {
-        cursor: pointer;
-        margin-bottom: 24px;
-        width: 49px;
-    }
-
     .page-title {
+        margin-left: 49px;
+        margin-top: 0;
+        margin-bottom: 6px;
         font-size: 32px;
+        line-height: 39px;
         font-weight: 700;
         color: #FFFFFF;
-        margin-bottom: 8px;
     }
 
     .page-subtitle {
+        margin-left: 49px;
+        margin-top: 0;
+        margin-bottom: 18px;
         font-size: 16px;
+        line-height: 19px;
         font-weight: 400;
         color: #A0A0B0;
-        margin-bottom: 32px;
     }
 
     .form-container {
-        display: flex;
-        gap: 32px;
+        margin-left: 49px;
+        display: grid;
+        grid-template-columns: 850px 370px;
+        align-items: start;
+        gap: 18px;
+        max-width: 1238px;
     }
 
     .main-form {
-        flex: 2;
+        width: 850px;
+        min-height: 977px;
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 20px;
-        padding: 32px;
+        padding: 24px 38px 28px;
     }
 
     .form-group {
-        margin-bottom: 24px;
+        margin-bottom: 19px;
     }
 
         .form-group label {
             display: block;
+            margin-bottom: 8px;
             font-size: 18px;
+            line-height: 22px;
             font-weight: 500;
             color: #FFFFFF;
-            margin-bottom: 8px;
         }
+
+    .required {
+        color: #EF4444;
+    }
 
     .input-wrapper input,
     .input-wrapper textarea {
         width: 100%;
-        padding: 16px;
-        background: #0F0F14;
         border: 1px solid #2A2A35;
         border-radius: 14px;
-        font-size: 16px;
+        background: #0F0F14;
         color: #FFFFFF;
-        font-family: 'Inter', sans-serif;
+        font-size: 16px;
+        line-height: 19px;
+        font-family: inherit;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-wrapper input {
+        height: 56px;
+        padding: 0 18px;
     }
 
     .input-wrapper textarea {
+        min-height: 160px;
         resize: vertical;
-        min-height: 120px;
+        padding: 14px 18px;
+        line-height: 21px;
     }
 
-        .input-wrapper input:focus,
-        .input-wrapper textarea:focus {
-            outline: none;
-            border-color: #6C63FF;
-        }
+    .input-wrapper input::placeholder,
+    .input-wrapper textarea::placeholder {
+        color: #7F8499;
+    }
+
+    .input-wrapper input:hover,
+    .input-wrapper textarea:hover,
+    .input-wrapper input:focus,
+    .input-wrapper textarea:focus {
+        outline: none;
+        border-color: #6C63FF;
+        box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
+    }
 
     .input-wrapper.error input,
     .input-wrapper.error textarea {
         border-color: #EF4444;
-        box-shadow: 0px 0px 8px rgba(239, 68, 68, 0.25);
+        box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
     }
 
     .error-message {
-        font-size: 14px;
-        color: #EF4444;
         margin-top: 6px;
-        margin-left: 12px;
+        margin-left: 6px;
+        font-size: 14px;
+        line-height: 17px;
+        color: #EF4444;
     }
 
     .custom-select {
@@ -754,30 +855,49 @@
     }
 
     .select-trigger {
-        width: 100%;
-        padding: 16px;
-        background: #0F0F14;
+        height: 56px;
+        padding: 0 16px 0 18px;
         border: 1px solid #2A2A35;
         border-radius: 14px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
+        background: #0F0F14;
         color: #FFFFFF;
         font-size: 16px;
+        line-height: 19px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .custom-select.error .select-trigger {
         border-color: #EF4444;
-        box-shadow: 0px 0px 8px rgba(239, 68, 68, 0.25);
+        box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
     }
 
+    .custom-select.open .select-trigger,
+    .select-trigger:hover {
+        border-color: #6C63FF;
+        box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
+    }
+
+    .select-value {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+        .select-value.placeholder {
+            color: #A0A0B0;
+        }
+
     .chevron-icon {
-        width: 24px;
-        height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="3"%3E%3Cpolyline points="6 9 12 15 18 9"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
-        transition: transform 0.2s;
+        width: 36px;
+        height: 38px;
+        flex-shrink: 0;
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%23A0A0B0\" stroke-width=\"2.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"%3E%3Cpolyline points=\"6 9 12 15 18 9\"/%3E%3C/svg%3E') no-repeat center;
+        background-size: 22px;
+        transition: transform 0.2s ease;
     }
 
     .custom-select.open .chevron-icon {
@@ -786,252 +906,335 @@
 
     .select-dropdown {
         position: absolute;
-        top: 100%;
+        top: calc(100% + 4px);
         left: 0;
         right: 0;
-        background: #1A1A22;
-        border: 1px solid #2A2A35;
-        border-radius: 12px;
-        margin-top: 8px;
-        z-index: 100;
-        max-height: 200px;
+        z-index: 40;
+        max-height: 130px;
         overflow-y: auto;
+        background: #171722;
+        border: 1px solid #2A2A35;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
     }
 
+        .select-dropdown::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .select-dropdown::-webkit-scrollbar-thumb {
+            background: #7F8499;
+            border-radius: 999px;
+        }
+
     .select-option {
-        padding: 12px 16px;
-        cursor: pointer;
+        height: 32px;
+        padding: 0 16px;
+        display: flex;
+        align-items: center;
         color: #FFFFFF;
         font-size: 16px;
-        transition: background 0.2s;
+        line-height: 19px;
+        cursor: pointer;
+        transition: background 0.18s ease;
     }
 
         .select-option:hover {
-            background: #2A2A35;
+            background: rgba(160, 160, 176, 0.24);
         }
 
         .select-option.selected {
-            background: #2A2A35;
-            color: #6C63FF;
+            color: #FFFFFF;
+            background: rgba(108, 99, 255, 0.16);
         }
 
     .drop-zone {
+        width: 100%;
+        min-height: 180px;
         border: 2px dashed #2A2A35;
         border-radius: 16px;
-        padding: 40px 20px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.2s;
         background: #1A1A22;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        text-align: center;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
+        .drop-zone:hover,
         .drop-zone.dragOver {
             border-color: #6C63FF;
-            background: #2A2A35;
+            background: #13131B;
+            box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.3);
         }
 
         .drop-zone.error {
             border-color: #EF4444;
+            box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
         }
 
     .drop-zone-icon {
         width: 51px;
         height: 52px;
-        margin: 0 auto 16px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2"%3E%3Cpath d="M12 3v12m0 0-3-3m3 3 3-3M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/%3E%3C/svg%3E') no-repeat center;
+        margin-bottom: 12px;
+        background: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%237F8499\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"%3E%3Cpath d=\"M12 3v12\"/%3E%3Cpath d=\"m8.5 11.5 3.5 3.5 3.5-3.5\"/%3E%3Cpath d=\"M5 18v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1\"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .drop-zone p {
+        margin: 0 0 6px;
         font-size: 16px;
+        line-height: 19px;
         color: #FFFFFF;
-        margin-bottom: 8px;
     }
 
     .drop-zone span {
         font-size: 14px;
+        line-height: 17px;
         color: #7F8499;
     }
 
     .selected-file {
+        height: 117px;
+        margin-top: 2px;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        background: #0F0F14;
+        padding: 0 26px 0 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #0F0F14;
-        border-radius: 12px;
-        padding: 12px 16px;
-        margin-top: 12px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
+
+        .selected-file:hover {
+            border-color: #6C63FF;
+            box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
+        }
 
     .file-info {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
     }
 
     .file-icon-small {
-        width: 40px;
-        height: 40px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="2"%3E%3Cpath d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/%3E%3Cpolyline points="13 2 13 9 20 9"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
+        width: 66px;
+        height: 66px;
+        border-radius: 10px;
+        background: #2A2348;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
+        .file-icon-small::before {
+            content: '';
+            width: 48px;
+            height: 50px;
+            background: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%236C63FF\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"%3E%3Cpath d=\"M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z\"/%3E%3Cpath d=\"M13 2v7h7\"/%3E%3C/svg%3E') no-repeat center;
+            background-size: contain;
+        }
+
     .file-name {
-        font-size: 16px;
+        max-width: 520px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 20px;
+        line-height: 24px;
         font-weight: 500;
         color: #FFFFFF;
     }
 
     .file-size {
-        font-size: 14px;
+        margin-top: 3px;
+        font-size: 16px;
+        line-height: 19px;
+        font-weight: 500;
         color: #A0A0B0;
     }
 
     .remove-file {
-        background: none;
+        width: 24px;
+        height: 24px;
+        padding: 0;
         border: none;
+        background: transparent;
         cursor: pointer;
     }
 
     .close-icon {
         width: 24px;
         height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23EF4444" stroke-width="2"%3E%3Cline x1="18" y1="6" x2="6" y2="18"/%3E%3Cline x1="6" y1="6" x2="18" y2="18"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%23EF4444\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"%3E%3Cpath d=\"M18 6 6 18\"/%3E%3Cpath d=\"m6 6 12 12\"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .current-file {
+        border: 1px solid #2A2A35;
+        border-radius: 12px;
+        background: #0F0F14;
+        padding: 12px 16px;
         display: flex;
         align-items: center;
         gap: 12px;
-        background: #0F0F14;
-        border-radius: 12px;
-        padding: 12px 16px;
-        margin-top: 8px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
+
+        .current-file:hover {
+            border-color: #6C63FF;
+            box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
+        }
 
     .view-file-link {
-        color: #6C63FF;
-        text-decoration: none;
         margin-left: auto;
+        border: none;
+        background: transparent;
+        color: #6C63FF;
+        cursor: pointer;
+        font: inherit;
     }
-
-        .view-file-link:hover {
-            text-decoration: underline;
-        }
 
     .form-buttons {
         display: flex;
-        gap: 16px;
-        margin-top: 24px;
+        gap: 31px;
+        margin-top: 4px;
     }
 
-    .cancel-btn, .submit-btn {
-        padding: 14px 24px;
+    .cancel-btn,
+    .submit-btn {
+        height: 52px;
         border-radius: 14px;
-        font-size: 18px;
+        font-size: 20px;
+        line-height: 24px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
     }
 
     .cancel-btn {
-        background: #0F0F14;
+        width: 349px;
         border: 1px solid #2A2A35;
+        background: #0F0F14;
         color: #FFFFFF;
     }
 
+        .cancel-btn:hover {
+            border-color: #6C63FF;
+            box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.3);
+        }
+
     .submit-btn {
+        width: 408px;
+        border: 1px solid #2A2A35;
         background: #6C63FF;
-        border: none;
         color: #FFFFFF;
-        flex: 1;
     }
 
         .submit-btn:hover:not(:disabled) {
             background: #594FFE;
-            transform: translateY(-2px);
-            box-shadow: 0px 8px 16px rgba(108, 99, 255, 0.45);
+            border-color: #6C63FF;
+            box-shadow: 0 8px 16px rgba(108, 99, 255, 0.45);
+            transform: translateY(-1px);
         }
 
         .submit-btn:disabled {
-            opacity: 0.6;
             cursor: not-allowed;
+            opacity: 0.65;
         }
 
     .info-panel {
-        flex: 1;
+        width: 370px;
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        gap: 13px;
     }
 
     .info-card {
-        background: #1A1A22;
+        width: 370px;
         border: 1px solid #2A2A35;
         border-radius: 20px;
-        padding: 24px;
+        background: #1A1A22;
+        padding: 20px 18px 20px;
+        height: fit-content;
+    }
+
+    .requirements-card {
+        padding-bottom: 18px;
+    }
+
+    .moderation-card {
+        padding-bottom: 16px;
     }
 
     .info-header {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
+        gap: 9px;
+        margin-bottom: 11px;
     }
 
     .info-icon {
         width: 28px;
         height: 28px;
+        flex-shrink: 0;
     }
 
     .requirements-icon {
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236C63FF" stroke-width="2"%3E%3Ccircle cx="12" cy="12" r="10"/%3E%3Cpath d="M12 16v-4M12 8h.01"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%236C63FF\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"9\"/%3E%3Cpath d=\"M12 8.2v5.3\"/%3E%3Ccircle cx=\"12\" cy=\"16.7\" r=\"1\" fill=\"%236C63FF\" stroke=\"none\"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .moderation-icon {
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23FFE100" stroke-width="2"%3E%3Cpath d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%23FFE100\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"9\"/%3E%3Cpath d=\"M12 8.2v5.3\"/%3E%3Ccircle cx=\"12\" cy=\"16.7\" r=\"1\" fill=\"%23FFE100\" stroke=\"none\"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .info-card h3 {
+        margin: 0;
         font-size: 20px;
+        line-height: 24px;
         font-weight: 600;
         color: #FFFFFF;
     }
 
     .requirements-list {
-        list-style: none;
+        margin: 0;
         padding: 0;
+        list-style: none;
     }
 
         .requirements-list li {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             font-size: 16px;
+            line-height: 32px;
             color: #FFFFFF;
-            margin-bottom: 12px;
         }
 
     .check-icon {
-        width: 20px;
-        height: 20px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2322C55E"%3E%3Cpath d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/%3E%3C/svg%3E') no-repeat center;
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+        background: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"%2322C55E\" stroke-width=\"2.2\"/%3E%3Cpath d=\"m8.2 12.4 2.5 2.6 5.1-5.4\" stroke=\"%2322C55E\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .info-card p {
+        margin: 0;
         font-size: 16px;
-        line-height: 1.5;
+        line-height: 22px;
         color: #FFFFFF;
     }
 
     .notification {
         position: fixed;
-        bottom: 30px;
         right: 30px;
+        bottom: 30px;
         z-index: 300;
         animation: slideIn 0.3s ease;
     }
@@ -1040,30 +1243,27 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        background: #1A1A22;
-        box-shadow: 0px 0px 20px rgba(108, 99, 255, 0.45);
-        border-radius: 12px;
         padding: 16px 24px;
+        border-radius: 12px;
+        background: #1A1A22;
+        box-shadow: 0 0 20px rgba(108, 99, 255, 0.45);
     }
 
     .check-icon-large {
         width: 24px;
         height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2322C55E"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/%3E%3C/svg%3E') no-repeat center;
+        background: url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%2322C55E\"%3E%3Cpath d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z\"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
     }
 
     .notification-content span {
         font-size: 20px;
+        line-height: 24px;
         font-weight: 500;
         color: #FFFFFF;
     }
 
     .notification-content .close-icon {
-        width: 24px;
-        height: 24px;
-        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23EF4444" stroke-width="2"%3E%3Cline x1="18" y1="6" x2="6" y2="18"/%3E%3Cline x1="6" y1="6" x2="18" y2="18"/%3E%3C/svg%3E') no-repeat center;
-        background-size: contain;
         cursor: pointer;
     }
 
@@ -1079,41 +1279,89 @@
         }
     }
 
-    @media (max-width: 1200px) {
+    @media (max-width: 1360px) {
         .add-note-page {
-            padding: 20px 40px;
-        }
-    }
-
-    @media (max-width: 900px) {
-        .add-note-page {
-            padding: 16px;
+            padding: 40px 32px 56px;
         }
 
         .form-container {
-            flex-direction: column;
+            max-width: calc(100% - 49px);
+            grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 18px;
+        }
+
+        .main-form,
+        .info-card {
+            width: 100%;
         }
 
         .info-panel {
-            flex-direction: row;
+            width: 100%;
+        }
+
+        .form-buttons {
+            gap: 16px;
+        }
+
+        .cancel-btn,
+        .submit-btn {
+            width: 100%;
         }
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 1080px) {
+        .page-title,
+        .page-subtitle,
         .form-container {
-            flex-direction: column;
+            margin-left: 0;
+        }
+
+        .form-container {
+            grid-template-columns: 1fr;
+            max-width: none;
         }
 
         .info-panel {
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+    }
+
+    @media (max-width: 780px) {
+        .add-note-page {
+            padding: 28px 16px 40px;
+        }
+
+        .top-left {
+            gap: 16px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            line-height: 24px;
+        }
+
+        .page-title {
+            font-size: 34px;
+            line-height: 42px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            line-height: 22px;
+        }
+
+        .main-form {
+            padding: 20px 16px 22px;
         }
 
         .form-buttons {
             flex-direction: column;
         }
 
-        .main-form {
-            padding: 20px;
+        .info-panel {
+            grid-template-columns: 1fr;
         }
     }
 </style>
