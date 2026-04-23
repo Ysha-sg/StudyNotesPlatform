@@ -385,7 +385,7 @@
             return
         }
 
-        const previewWindow = window.open('', '_blank', 'noopener')
+        const previewWindow = window.open('', '_blank')
         if (!previewWindow) {
             isErrorFeedback.value = true
             feedbackMessage.value = 'Разрешите всплывающие окна в браузере, чтобы открыть файл'

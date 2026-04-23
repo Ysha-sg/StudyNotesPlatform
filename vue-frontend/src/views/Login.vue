@@ -329,20 +329,20 @@
         }
 
     .error-message {
-        font-size: 14px;
-        color: #EF4444;
+        font-size: 16px;
+        color: #FF6B6B;
         margin-top: 6px;
         margin-left: 12px;
     }
 
     .general-error {
-        background: rgba(239, 68, 68, 0.1);
-        color: #EF4444;
+        background: rgba(255, 107, 107, 0.15);
+        color: #FF6B6B;
         padding: 12px;
-        border-radius: 14px;
+        border-radius: 12px;
         margin: 16px 0;
         text-align: center;
-        font-size: 14px;
+        font-size: 18px;
     }
 
     .login-btn {

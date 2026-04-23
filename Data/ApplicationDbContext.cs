@@ -25,6 +25,7 @@ public class ApplicationDbContext : DbContext
     // DbSet для избранного
     public DbSet<Favorite> Favorites { get; set; }
     public DbSet<Complaint> Complaints { get; set; }
+    public DbSet<NoteRating> NoteRatings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -241,6 +242,32 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.NoteId);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => new { e.NoteId, e.ReporterId, e.Status });
+        });
+
+        // NoteRatings (оценки)
+        modelBuilder.Entity<NoteRating>(entity =>
+        {
+            entity.ToTable("note_ratings");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.NoteId).HasColumnName("note_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Rating).HasColumnName("rating");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+
+            entity.HasOne(e => e.Note)
+                .WithMany()
+                .HasForeignKey(e => e.NoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.NoteId, e.UserId }).IsUnique();
+            entity.HasIndex(e => e.NoteId);
         });
     }
 }

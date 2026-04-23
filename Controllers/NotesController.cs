@@ -8,6 +8,7 @@ using UglyToad.PdfPig;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
+using Npgsql;
 
 namespace StudyNotesPlatform.Controllers;
 
@@ -44,6 +45,11 @@ public class ResolveComplaintModel
 {
     public bool ConfirmComplaint { get; set; }
     public string? Comment { get; set; }
+}
+
+public class RateNoteModel
+{
+    public int Rating { get; set; }
 }
 
 [ApiController]
@@ -900,6 +906,19 @@ public class NotesController : ControllerBase
             }
         }
 
+        var currentUserRating = 0;
+        if (User?.Identity?.IsAuthenticated == true)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(userIdClaim, out var currentUserId))
+            {
+                currentUserRating = await _context.NoteRatings
+                    .Where(r => r.NoteId == note.Id && r.UserId == currentUserId)
+                    .Select(r => r.Rating)
+                    .FirstOrDefaultAsync();
+            }
+        }
+
         return Ok(new
         {
             note.Id,
@@ -914,6 +933,7 @@ public class NotesController : ControllerBase
             note.FilePath,
             note.DownloadsCount,
             Rating = note.AverageRating ?? 0,
+            UserRating = currentUserRating,
             Author = note.User?.FullName,
             UploadedAt = note.UploadedAt
         });
@@ -971,8 +991,12 @@ public class NotesController : ControllerBase
             return Problem(statusCode: StatusCodes.Status404NotFound, title: "Файл конспекта не найден");
         }
 
-        note.DownloadsCount += 1;
-        await _context.SaveChangesAsync();
+        var shouldCountDownload = !User.IsInRole("moderator") && !User.IsInRole("admin");
+        if (shouldCountDownload)
+        {
+            note.DownloadsCount += 1;
+            await _context.SaveChangesAsync();
+        }
 
         var provider = new FileExtensionContentTypeProvider();
         if (!provider.TryGetContentType(resolvedPath, out var contentType))
@@ -988,6 +1012,84 @@ public class NotesController : ControllerBase
 
         var stream = new FileStream(resolvedPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         return File(stream, contentType, downloadName);
+    }
+
+    [HttpPost("{id:int}/rate")]
+    [Authorize]
+    public async Task<IActionResult> RateNote(int id, [FromBody] RateNoteModel model)
+    {
+        if (model.Rating < 1 || model.Rating > 10)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Оценка должна быть в диапазоне от 1 до 10");
+        }
+
+        var note = await _context.Notes.FirstOrDefaultAsync(n => n.Id == id);
+        if (note == null)
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, title: "РљРѕРЅСЃРїРµРєС‚ РЅРµ РЅР°Р№РґРµРЅ");
+        }
+
+        if (!await CanUserAccessNoteFileAsync(note))
+        {
+            return Problem(statusCode: StatusCodes.Status403Forbidden, title: "Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰С‘РЅ");
+        }
+
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var existingRating = await _context.NoteRatings
+            .FirstOrDefaultAsync(r => r.NoteId == id && r.UserId == userId);
+
+        if (existingRating == null)
+        {
+            _context.NoteRatings.Add(new NoteRating
+            {
+                NoteId = id,
+                UserId = userId,
+                Rating = model.Rating,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            existingRating.Rating = model.Rating;
+            existingRating.UpdatedAt = DateTime.UtcNow;
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == PostgresErrorCodes.NumericValueOutOfRange)
+        {
+            await _context.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE notes
+                ALTER COLUMN average_rating TYPE numeric(4,2)
+                USING average_rating::numeric(4,2);
+                """);
+
+            await _context.SaveChangesAsync();
+        }
+
+        var averageRating = await _context.NoteRatings
+            .Where(r => r.NoteId == id)
+            .AverageAsync(r => (double?)r.Rating);
+
+        note.AverageRating = averageRating.HasValue
+            ? Math.Round((decimal)averageRating.Value, 1, MidpointRounding.AwayFromZero)
+            : null;
+        await _context.SaveChangesAsync();
+
+        var votesCount = await _context.NoteRatings.CountAsync(r => r.NoteId == id);
+
+        return Ok(new
+        {
+            note.Id,
+            Rating = note.AverageRating ?? 0,
+            UserRating = model.Rating,
+            VotesCount = votesCount
+        });
     }
 
     [HttpPost("{id:int}/complaints")]

@@ -98,18 +98,30 @@
                 <div class="rating-block">
                     <div class="rating-header">
                         <h3>Рейтинг</h3>
-                        <span class="rating-value">{{ note.rating }}</span>
                     </div>
-                    <div class="rating-stars">
-                        <span v-for="star in 5"
+                    <div class="rating-value">{{ displayRating }}</div>
+                    <div class="rating-stars-static">
+                        <span v-for="star in maxRating"
                               :key="star"
                               class="star"
-                              :class="{ filled: star <= Math.floor(note.rating / 2) }"
-                              @click="rateNote(star * 2)"></span>
+                              :class="{ filled: isDisplayStarFilled(star) }"></span>
                     </div>
-                    <p class="rating-text">Оцените конспект</p>
                     <div class="downloads-count">{{ note.downloadsCount }} скачиваний</div>
                     <div class="rating-line"></div>
+                    <p class="rating-text">Оцените конспект</p>
+                    <div class="rating-stars-input" @mouseleave="setHoverRating(0)">
+                        <button v-for="star in maxRating"
+                                :key="`input-${star}`"
+                                type="button"
+                                class="star-button"
+                                :disabled="isRatingSaving"
+                                @mouseenter="setHoverRating(star)"
+                                @focus="setHoverRating(star)"
+                                @click="rateNote(star)">
+                            <span class="star interactive"
+                                  :class="{ filled: isInputStarFilled(star) }"></span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="complaint-block">
@@ -177,7 +189,7 @@
 </template>
 
 <script setup>
-    import { ref, onMounted, onUnmounted } from 'vue'
+    import { computed, ref, onMounted, onUnmounted } from 'vue'
     import { useRouter, useRoute } from 'vue-router'
     import { useAuthStore } from '@/stores/auth'
     import api from '@/services/api'
@@ -198,8 +210,26 @@
         description: '',
         filePath: '',
         rating: 0,
+        userRating: 0,
         downloadsCount: 0
     })
+    const maxRating = 10
+    const hoverRating = ref(0)
+    const isRatingSaving = ref(false)
+
+    const safeRating = computed(() => {
+        const numeric = Number(note.value.rating)
+        if (!Number.isFinite(numeric)) return 0
+        return Math.max(0, Math.min(maxRating, numeric))
+    })
+
+    const safeUserRating = computed(() => {
+        const numeric = Number(note.value.userRating)
+        if (!Number.isFinite(numeric)) return 0
+        return Math.max(0, Math.min(maxRating, numeric))
+    })
+
+    const displayRating = computed(() => safeRating.value.toFixed(1))
 
     const showComplaintModal = ref(false)
     const isReasonOpen = ref(false)
@@ -234,7 +264,10 @@
         try {
             const id = route.params.id
             const response = await api.get(`/notes/${id}`)
-            note.value = response.data
+            note.value = {
+                ...response.data,
+                userRating: Number(response.data?.userRating ?? 0)
+            }
             saveToHistory(note.value)
         } catch (error) {
             console.error('Ошибка загрузки конспекта:', error)
@@ -326,7 +359,7 @@
             return
         }
 
-        const previewWindow = window.open('', '_blank', 'noopener')
+        const previewWindow = window.open('', '_blank')
         if (!previewWindow) {
             alert('Разрешите всплывающие окна в браузере, чтобы открыть файл')
             return
@@ -392,11 +425,42 @@
 
     const rateNote = async (rating) => {
         try {
-            await api.post(`/notes/${note.value.id}/rate`, { rating })
-            note.value.rating = rating
+            if (!note.value.id) return
+            if (!authStore.isAuthenticated) {
+                redirectToLogin()
+                return
+            }
+
+            isRatingSaving.value = true
+            const normalized = Math.max(1, Math.min(maxRating, Number(rating) || 1))
+            const response = await api.post(`/notes/${note.value.id}/rate`, { rating: normalized })
+            note.value.rating = Number(response.data?.rating ?? normalized)
+            note.value.userRating = Number(response.data?.userRating ?? normalized)
+            await loadNote()
+            hoverRating.value = 0
         } catch (error) {
             console.error('Ошибка при оценке:', error)
+            const message =
+                error.response?.data?.title ||
+                error.response?.data?.detail ||
+                'Не удалось поставить оценку'
+            alert(message)
+        } finally {
+            isRatingSaving.value = false
         }
+    }
+
+    const setHoverRating = (rating) => {
+        hoverRating.value = Math.max(0, Math.min(maxRating, Number(rating) || 0))
+    }
+
+    const isDisplayStarFilled = (star) => {
+        return star <= Math.round(safeRating.value)
+    }
+
+    const isInputStarFilled = (star) => {
+        const activeRating = hoverRating.value > 0 ? hoverRating.value : Math.round(safeUserRating.value)
+        return star <= activeRating
     }
 
     const openComplaintModal = () => {
@@ -781,10 +845,8 @@
     }
 
     .rating-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-bottom: 16px;
+        margin-bottom: 10px;
+        text-align: left;
     }
 
         .rating-header h3 {
@@ -794,23 +856,37 @@
         }
 
     .rating-value {
-        font-size: 36px;
+        font-size: 64px;
+        line-height: 1;
         font-weight: 700;
         color: #FFFFFF;
+        text-align: center;
+        margin-bottom: 10px;
     }
 
-    .rating-stars {
+    .rating-stars-static,
+    .rating-stars-input {
         display: flex;
-        gap: 8px;
-        margin-bottom: 12px;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        flex-wrap: nowrap;
+    }
+
+    .rating-stars-static {
+        margin-bottom: 10px;
+    }
+
+    .rating-stars-input {
+        margin-top: 2px;
     }
 
     .star {
-        width: 32px;
-        height: 32px;
+        display: block;
+        width: 22px;
+        height: 22px;
         background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23686D88" stroke-width="1.5"%3E%3Cpolygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9 12 2"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
-        cursor: pointer;
     }
 
         .star.filled {
@@ -818,22 +894,51 @@
             background-size: contain;
         }
 
+    .star-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        line-height: 0;
+        cursor: pointer;
+    }
+
+        .star-button:disabled {
+            cursor: wait;
+            opacity: 0.75;
+        }
+
+    .star.interactive {
+        transition: transform 0.18s ease, filter 0.2s ease;
+    }
+
+    .star-button:hover .star.interactive,
+    .star-button:focus-visible .star.interactive {
+        transform: scale(1.14);
+        filter: drop-shadow(0 0 4px rgba(255, 225, 0, 0.45));
+    }
+
     .rating-text {
         font-size: 16px;
         color: #A0A0B0;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
 
     .downloads-count {
         font-size: 16px;
         color: #A0A0B0;
+        text-align: center;
         margin-bottom: 16px;
     }
 
     .rating-line {
         height: 1px;
         background: #2A2A35;
-        margin: 16px 0;
+        margin: 12px 0 16px;
     }
 
     .complaint-block {
@@ -1062,21 +1167,6 @@
             transform: translateY(-2px);
         }
 
-    .description-block:hover,
-    .file-block:hover,
-    .file-card:hover,
-    .rating-block:hover,
-    .complaint-block:hover,
-    .select-trigger:hover,
-    textarea:hover,
-    .cancel-btn:hover,
-    .report-btn:hover,
-    .view-file-btn:hover,
-    .download-file-btn:hover {
-        border-color: #6C63FF;
-        box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.3);
-    }
-
     .notification {
         position: fixed;
         bottom: 30px;
@@ -1175,12 +1265,20 @@
         }
 
         .rating-value {
-            font-size: 28px;
+            font-size: 42px;
         }
 
         .star {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
+        }
+
+        .rating-text {
+            font-size: 15px;
+        }
+
+        .downloads-count {
+            font-size: 15px;
         }
 
         .complaint-btn, .report-btn {

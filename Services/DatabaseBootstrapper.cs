@@ -16,13 +16,17 @@ public static class DatabaseBootstrapper
     {
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
         var logger = scope.ServiceProvider
             .GetRequiredService<ILoggerFactory>()
             .CreateLogger("DatabaseBootstrapper");
 
         await EnsureComplaintsTableAsync(context, cancellationToken);
+        await EnsureNoteRatingsTableAsync(context, cancellationToken);
         await EnsureRolesAsync(context, cancellationToken);
         await EnsureNoteStatusesAsync(context, cancellationToken);
+        await EnsureNotesRatingColumnAsync(context, cancellationToken);
+        await EnsureTxtNoteFilesConvertedAsync(context, env, logger, cancellationToken);
         await EnsureDefaultModeratorAsync(context, logger, cancellationToken);
 
         logger.LogInformation("Database bootstrap complete.");
@@ -47,6 +51,25 @@ public static class DatabaseBootstrapper
             CREATE INDEX IF NOT EXISTS ix_complaints_note_id ON complaints(note_id);
             CREATE INDEX IF NOT EXISTS ix_complaints_status ON complaints(status);
             CREATE INDEX IF NOT EXISTS ix_complaints_note_reporter_status ON complaints(note_id, reporter_id, status);
+            """;
+
+        await context.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+    }
+
+    private static async Task EnsureNoteRatingsTableAsync(ApplicationDbContext context, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            CREATE TABLE IF NOT EXISTS note_ratings
+            (
+                id SERIAL PRIMARY KEY,
+                note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 10),
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS ux_note_ratings_note_user ON note_ratings(note_id, user_id);
+            CREATE INDEX IF NOT EXISTS ix_note_ratings_note_id ON note_ratings(note_id);
             """;
 
         await context.Database.ExecuteSqlRawAsync(sql, cancellationToken);
@@ -109,6 +132,186 @@ public static class DatabaseBootstrapper
         }
 
         await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task EnsureNotesRatingColumnAsync(ApplicationDbContext context, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            ALTER TABLE notes
+            ALTER COLUMN average_rating TYPE numeric(4,2)
+            USING average_rating::numeric(4,2);
+            """;
+
+        await context.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+    }
+
+    private static async Task EnsureTxtNoteFilesConvertedAsync(
+        ApplicationDbContext context,
+        IWebHostEnvironment env,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var txtNotes = await context.Notes
+            .Where(n => n.FilePath.EndsWith(".txt"))
+            .ToListAsync(cancellationToken);
+
+        if (txtNotes.Count == 0)
+        {
+            return;
+        }
+
+        var contentRootUploads = Path.Combine(env.ContentRootPath, "uploads");
+        var webRootUploads = string.IsNullOrWhiteSpace(env.WebRootPath)
+            ? null
+            : Path.Combine(env.WebRootPath, "uploads");
+
+        var updatedCount = 0;
+
+        foreach (var note in txtNotes)
+        {
+            var fileName = Path.GetFileName(note.FilePath.Replace('\\', '/'));
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                continue;
+            }
+
+            var txtCandidates = new List<string>
+            {
+                Path.Combine(contentRootUploads, fileName)
+            };
+
+            if (!string.IsNullOrWhiteSpace(webRootUploads))
+            {
+                txtCandidates.Add(Path.Combine(webRootUploads, fileName));
+            }
+
+            var txtPath = txtCandidates.FirstOrDefault(File.Exists);
+            if (txtPath == null)
+            {
+                continue;
+            }
+
+            var pdfPath = Path.ChangeExtension(txtPath, ".pdf")!;
+            if (!File.Exists(pdfPath))
+            {
+                var txtContent = await File.ReadAllTextAsync(txtPath, cancellationToken);
+                var pdfBytes = BuildSimplePdfFromText(string.IsNullOrWhiteSpace(txtContent)
+                    ? "StudyNotes placeholder PDF"
+                    : txtContent);
+                await File.WriteAllBytesAsync(pdfPath, pdfBytes, cancellationToken);
+            }
+
+            note.FilePath = Path.ChangeExtension(note.FilePath.Replace('\\', '/'), ".pdf")!;
+            updatedCount++;
+        }
+
+        if (updatedCount > 0)
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Converted {Count} txt note files to pdf placeholders.", updatedCount);
+        }
+    }
+
+    private static byte[] BuildSimplePdfFromText(string text)
+    {
+        static string EscapePdfText(string value)
+        {
+            return value
+                .Replace("\\", "\\\\", StringComparison.Ordinal)
+                .Replace("(", "\\(", StringComparison.Ordinal)
+                .Replace(")", "\\)", StringComparison.Ordinal);
+        }
+
+        var lines = text
+            .Replace("\r", string.Empty, StringComparison.Ordinal)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim())
+            .Where(l => l.Length > 0)
+            .Take(40)
+            .Select(l => l.Length > 80 ? l[..80] : l)
+            .ToList();
+
+        if (lines.Count == 0)
+        {
+            lines.Add("StudyNotes PDF placeholder");
+        }
+
+        var content = new StringBuilder();
+        content.AppendLine("BT");
+        content.AppendLine("/F1 12 Tf");
+        content.AppendLine("50 780 Td");
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (i > 0)
+            {
+                content.AppendLine("0 -16 Td");
+            }
+            content.Append('(').Append(EscapePdfText(lines[i])).AppendLine(") Tj");
+        }
+        content.AppendLine("ET");
+
+        var contentBytes = Encoding.ASCII.GetBytes(content.ToString());
+
+        using var ms = new MemoryStream();
+        using var writer = new StreamWriter(ms, Encoding.ASCII, leaveOpen: true);
+
+        writer.WriteLine("%PDF-1.4");
+        writer.Flush();
+
+        var offsets = new List<long>();
+
+        offsets.Add(ms.Position);
+        writer.WriteLine("1 0 obj");
+        writer.WriteLine("<< /Type /Catalog /Pages 2 0 R >>");
+        writer.WriteLine("endobj");
+        writer.Flush();
+
+        offsets.Add(ms.Position);
+        writer.WriteLine("2 0 obj");
+        writer.WriteLine("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+        writer.WriteLine("endobj");
+        writer.Flush();
+
+        offsets.Add(ms.Position);
+        writer.WriteLine("3 0 obj");
+        writer.WriteLine("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>");
+        writer.WriteLine("endobj");
+        writer.Flush();
+
+        offsets.Add(ms.Position);
+        writer.WriteLine("4 0 obj");
+        writer.WriteLine($"<< /Length {contentBytes.Length} >>");
+        writer.WriteLine("stream");
+        writer.Flush();
+        ms.Write(contentBytes, 0, contentBytes.Length);
+        writer.WriteLine();
+        writer.WriteLine("endstream");
+        writer.WriteLine("endobj");
+        writer.Flush();
+
+        offsets.Add(ms.Position);
+        writer.WriteLine("5 0 obj");
+        writer.WriteLine("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+        writer.WriteLine("endobj");
+        writer.Flush();
+
+        var xrefStart = ms.Position;
+        writer.WriteLine("xref");
+        writer.WriteLine("0 6");
+        writer.WriteLine("0000000000 65535 f ");
+        foreach (var offset in offsets)
+        {
+            writer.WriteLine($"{offset:D10} 00000 n ");
+        }
+
+        writer.WriteLine("trailer");
+        writer.WriteLine("<< /Size 6 /Root 1 0 R >>");
+        writer.WriteLine("startxref");
+        writer.WriteLine(xrefStart);
+        writer.WriteLine("%%EOF");
+        writer.Flush();
+
+        return ms.ToArray();
     }
 
     private static async Task EnsureDefaultModeratorAsync(
