@@ -330,18 +330,13 @@
     const getDownloadFileName = (fallbackName, contentDisposition) => {
         if (!contentDisposition) return fallbackName
 
-<<<<<<< Updated upstream
-        const utfMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)
-        if (utfMatch && utfMatch[1]) {
-            return decodeURIComponent(utfMatch[1])
+        const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)
+        if (utf8Match?.[1]) {
+            return decodeURIComponent(utf8Match[1])
         }
 
-        const asciiMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i)
-        if (asciiMatch && asciiMatch[1]) {
-            return asciiMatch[1]
-        }
-
-        return fallbackName
+        const fallbackMatch = contentDisposition.match(/filename="?([^";]+)"?/i)
+        return fallbackMatch?.[1] || fallbackName
     }
 
     const redirectToLogin = () => {
@@ -385,32 +380,15 @@
             }
             console.error('Ошибка просмотра файла:', error)
             alert('Не удалось открыть файл')
-=======
-        const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)
-        if (utf8Match?.[1]) {
-            return decodeURIComponent(utf8Match[1])
-        }
-
-        const fallbackMatch = contentDisposition.match(/filename="?([^"]+)"?/i)
-        return fallbackMatch?.[1] || fallbackName
-    }
-
-    const viewFile = () => {
-        if (note.value.filePath) {
-            window.open(note.value.filePath, '_blank')
->>>>>>> Stashed changes
         }
     }
 
     const downloadFile = async () => {
         if (!note.value.id) return
-<<<<<<< Updated upstream
         if (!authStore.isAuthenticated) {
             redirectToLogin()
             return
         }
-=======
->>>>>>> Stashed changes
 
         try {
             const response = await api.get(`/notes/${note.value.id}/download`, {
@@ -423,31 +401,20 @@
                 response.headers['content-disposition']
             )
 
-<<<<<<< Updated upstream
-            const blobUrl = URL.createObjectURL(response.data)
-            const link = document.createElement('a')
-            link.href = blobUrl
-=======
             const url = URL.createObjectURL(response.data)
             const link = document.createElement('a')
             link.href = url
->>>>>>> Stashed changes
             link.download = downloadName
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
-<<<<<<< Updated upstream
-            URL.revokeObjectURL(blobUrl)
+            URL.revokeObjectURL(url)
+            note.value.downloadsCount += 1
         } catch (error) {
             if (error.response?.status === 401 || error.response?.status === 403) {
                 redirectToLogin()
                 return
             }
-=======
-            URL.revokeObjectURL(url)
-            note.value.downloadsCount += 1
-        } catch (error) {
->>>>>>> Stashed changes
             console.error('Ошибка скачивания файла:', error)
             alert('Не удалось скачать файл')
         }
