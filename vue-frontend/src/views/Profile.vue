@@ -304,9 +304,14 @@
         favorites.value = favoritesStore.favorites
     }
 
-    const loadDownloadHistory = () => {
-        const history = JSON.parse(localStorage.getItem('downloadHistory') || '[]')
-        downloadHistory.value = history
+    const loadDownloadHistory = async () => {
+        try {
+            const response = await api.get('/notes/download-history')
+            downloadHistory.value = response.data
+        } catch (error) {
+            console.error('Ошибка загрузки истории скачиваний:', error)
+            downloadHistory.value = []
+        }
     }
 
     const openEditModal = () => {
