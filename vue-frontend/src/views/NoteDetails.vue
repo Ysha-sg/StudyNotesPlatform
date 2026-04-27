@@ -1,4 +1,5 @@
-﻿<template>
+﻿﻿
+<template>
     <div class="note-details-page">
         <!-- Шапка -->
         <div class="header">
@@ -205,9 +206,8 @@
         </div>
     </div>
 </template>
-
 <script setup>
-    import { ref, onMounted, onUnmounted } from 'vue'
+    import { computed, ref, onMounted, onUnmounted } from 'vue'
     import { useRouter, useRoute } from 'vue-router'
     import { useAuthStore } from '@/stores/auth'
     import api from '@/services/api'
@@ -217,7 +217,6 @@
     const authStore = useAuthStore()
 
     const isMenuOpen = ref(false)
-    const tempRating = ref(0)
 
     const note = ref({
         id: null,
@@ -229,8 +228,26 @@
         description: '',
         filePath: '',
         rating: 0,
+        userRating: 0,
         downloadsCount: 0
     })
+    const maxRating = 10
+    const hoverRating = ref(0)
+    const isRatingSaving = ref(false)
+
+    const safeRating = computed(() => {
+        const numeric = Number(note.value.rating)
+        if (!Number.isFinite(numeric)) return 0
+        return Math.max(0, Math.min(maxRating, numeric))
+    })
+
+    const safeUserRating = computed(() => {
+        const numeric = Number(note.value.userRating)
+        if (!Number.isFinite(numeric)) return 0
+        return Math.max(0, Math.min(maxRating, numeric))
+    })
+
+    const displayRating = computed(() => safeRating.value.toFixed(1))
 
     const showComplaintModal = ref(false)
     const isReasonOpen = ref(false)
@@ -240,12 +257,36 @@
     const showNotification = ref(false)
     let notificationTimeout = null
 
+    // Сохранение в историю просмотров (localStorage)
+    const saveToHistory = (noteData) => {
+        const history = JSON.parse(localStorage.getItem('downloadHistory') || '[]')
+        const existingIndex = history.findIndex(item => item.id === noteData.id)
+        if (existingIndex !== -1) {
+            history.splice(existingIndex, 1)
+        }
+        history.unshift({
+            id: noteData.id,
+            title: noteData.title,
+            subject: noteData.subject,
+            teacher: noteData.teacher,
+            university: noteData.university,
+            rating: noteData.rating,
+            downloadsCount: noteData.downloadsCount,
+            downloadedAt: new Date().toISOString()
+        })
+        if (history.length > 20) history.pop()
+        localStorage.setItem('downloadHistory', JSON.stringify(history))
+    }
+
     const loadNote = async () => {
         try {
             const id = route.params.id
             const response = await api.get(`/notes/${id}`)
-            note.value = response.data
-            tempRating.value = note.value.rating
+            note.value = {
+                ...response.data,
+                userRating: Number(response.data?.userRating ?? 0)
+            }
+            saveToHistory(note.value)
         } catch (error) {
             console.error('Ошибка загрузки конспекта:', error)
         }
@@ -304,29 +345,137 @@
         return filePath.split('/').pop()
     }
 
-    const viewFile = () => {
-        if (note.value.filePath) {
-            window.open(note.value.filePath, '_blank')
+    const getDownloadFileName = (fallbackName, contentDisposition) => {
+        if (!contentDisposition) return fallbackName
+
+        const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)
+        if (utf8Match?.[1]) {
+            return decodeURIComponent(utf8Match[1])
+        }
+
+        const fallbackMatch = contentDisposition.match(/filename="?([^";]+)"?/i)
+        return fallbackMatch?.[1] || fallbackName
+    }
+
+    const redirectToLogin = () => {
+        router.push({
+            path: '/login',
+            query: {
+                redirect: route.fullPath
+            }
+        })
+    }
+
+    const viewFile = async () => {
+        if (!note.value.id) return
+        if (!authStore.isAuthenticated) {
+            redirectToLogin()
+            return
+        }
+
+        const previewWindow = window.open('', '_blank')
+        if (!previewWindow) {
+            alert('Разрешите всплывающие окна в браузере, чтобы открыть файл')
+            return
+        }
+
+        try {
+            const response = await api.get(`/notes/${note.value.id}/file`, {
+                responseType: 'blob'
+            })
+
+            const blobUrl = URL.createObjectURL(response.data)
+            previewWindow.location.href = blobUrl
+
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl)
+            }, 60_000)
+        } catch (error) {
+            previewWindow.close()
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                redirectToLogin()
+                return
+            }
+            console.error('Ошибка просмотра файла:', error)
+            alert('Не удалось открыть файл')
         }
     }
 
-    const downloadFile = () => {
-        if (note.value.filePath) {
+    const downloadFile = async () => {
+        if (!note.value.id) return
+        if (!authStore.isAuthenticated) {
+            redirectToLogin()
+            return
+        }
+
+        try {
+            const response = await api.get(`/notes/${note.value.id}/download`, {
+                responseType: 'blob'
+            })
+
+            const fallbackName = getFileName(note.value.filePath) || `note-${note.value.id}.pdf`
+            const downloadName = getDownloadFileName(
+                fallbackName,
+                response.headers['content-disposition']
+            )
+
+            const url = URL.createObjectURL(response.data)
             const link = document.createElement('a')
-            link.href = note.value.filePath
-            link.download = getFileName(note.value.filePath)
+            link.href = url
+            link.download = downloadName
+            document.body.appendChild(link)
             link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+            note.value.downloadsCount += 1
+        } catch (error) {
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                redirectToLogin()
+                return
+            }
+            console.error('Ошибка скачивания файла:', error)
+            alert('Не удалось скачать файл')
         }
     }
 
     const rateNote = async (rating) => {
-        tempRating.value = rating
         try {
-            await api.post(`/notes/${note.value.id}/rate`, { rating })
-            note.value.rating = rating
+            if (!note.value.id) return
+            if (!authStore.isAuthenticated) {
+                redirectToLogin()
+                return
+            }
+
+            isRatingSaving.value = true
+            const normalized = Math.max(1, Math.min(maxRating, Number(rating) || 1))
+            const response = await api.post(`/notes/${note.value.id}/rate`, { rating: normalized })
+            note.value.rating = Number(response.data?.rating ?? normalized)
+            note.value.userRating = Number(response.data?.userRating ?? normalized)
+            await loadNote()
+            hoverRating.value = 0
         } catch (error) {
             console.error('Ошибка при оценке:', error)
+            const message =
+                error.response?.data?.title ||
+                error.response?.data?.detail ||
+                'Не удалось поставить оценку'
+            alert(message)
+        } finally {
+            isRatingSaving.value = false
         }
+    }
+
+    const setHoverRating = (rating) => {
+        hoverRating.value = Math.max(0, Math.min(maxRating, Number(rating) || 0))
+    }
+
+    const isDisplayStarFilled = (star) => {
+        return star <= Math.round(safeRating.value)
+    }
+
+    const isInputStarFilled = (star) => {
+        const activeRating = hoverRating.value > 0 ? hoverRating.value : Math.round(safeUserRating.value)
+        return star <= activeRating
     }
 
     const openComplaintModal = () => {

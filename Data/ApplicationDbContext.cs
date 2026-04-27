@@ -26,6 +26,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Favorite> Favorites { get; set; }
     public DbSet<Complaint> Complaints { get; set; }
     public DbSet<NoteRating> NoteRatings { get; set; }
+    public DbSet<NoteDownload> NoteDownloads { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -268,6 +269,31 @@ public class ApplicationDbContext : DbContext
 
             entity.HasIndex(e => new { e.NoteId, e.UserId }).IsUnique();
             entity.HasIndex(e => e.NoteId);
+        });
+
+        // NoteDownloads (история скачиваний)
+        modelBuilder.Entity<NoteDownload>(entity =>
+        {
+            entity.ToTable("note_downloads");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.NoteId).HasColumnName("note_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.DownloadedAt).HasColumnName("downloaded_at");
+
+            entity.HasOne(e => e.Note)
+                .WithMany()
+                .HasForeignKey(e => e.NoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.NoteId);
+            entity.HasIndex(e => e.DownloadedAt);
         });
     }
 }

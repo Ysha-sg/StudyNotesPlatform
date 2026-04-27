@@ -1,4 +1,5 @@
-﻿<template>
+﻿﻿
+<template>
     <div class="profile-page">
         <!-- Шапка с отступом 56px сверху -->
         <div class="header">
@@ -129,7 +130,6 @@
                         <div class="status-badge" :class="getStatusClass(note.status)">
                             {{ getStatusText(note.status) }}
                         </div>
-                        <button class="open-btn" @click="openNote(note.id)">Открыть</button>
                         <button class="fix-btn" @click="editNote(note.id)">Исправить</button>
                         <button class="delete-btn" @click="deleteNote(note.id)">Удалить</button>
                     </template>
@@ -206,16 +206,6 @@
         fullName: '',
         email: '',
         university: ''
-    })
-
-    // Инициалы для аватара
-    const userInitials = computed(() => {
-        if (!profile.fullName) return ''
-        const nameParts = profile.fullName.trim().split(' ')
-        if (nameParts.length >= 2) {
-            return (nameParts[0][0] + nameParts[1][0]).toUpperCase()
-        }
-        return profile.fullName[0]?.toUpperCase() || ''
     })
 
     const universities = ref([])
@@ -337,6 +327,22 @@
         }
     }
 
+    const userInitials = computed(() => {
+        const name = profile.fullName
+        if (!name) return '??'
+
+        const parts = name.trim().split(' ')
+        if (parts.length === 1) {
+            return parts[0].substring(0, 2).toUpperCase()
+        }
+
+        // Берем первую букву имени и первую букву фамилии
+        const firstName = parts[0]
+        const lastName = parts[parts.length - 1]
+
+        return (firstName[0] + lastName[0]).toUpperCase()
+    })
+
     const loadUniversities = async () => {
         try {
             const response = await api.get('/lookup/all-universities')
@@ -360,9 +366,14 @@
         favorites.value = favoritesStore.favorites
     }
 
-    const loadDownloadHistory = () => {
-        const history = JSON.parse(localStorage.getItem('downloadHistory') || '[]')
-        downloadHistory.value = history
+    const loadDownloadHistory = async () => {
+        try {
+            const response = await api.get('/notes/download-history')
+            downloadHistory.value = response.data
+        } catch (error) {
+            console.error('Ошибка загрузки истории скачиваний:', error)
+            downloadHistory.value = []
+        }
     }
 
     const openEditModal = () => {
@@ -895,11 +906,11 @@
         line-height: 24px;
     }
 
-        .rejection-reason span {
-            font-size: 20px;
-            font-weight: 500;
-            color: #F87171;
-        }
+    .rejection-reason span {
+        font-size: 20px;
+        font-weight: 500;
+        color: #F87171;
+    }
 
     .empty-state {
         text-align: center;

@@ -163,14 +163,6 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Создаём папку wwwroot, если её нет
-var wwwrootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
-if (!Directory.Exists(wwwrootPath))
-{
-    Directory.CreateDirectory(wwwrootPath);
-    Console.WriteLine($"Папка wwwroot создана по адресу: {wwwrootPath}");
-}
-
 app.UseStaticFiles();
 
 // Авто-создание приватной папки uploads (не раздаётся как static)

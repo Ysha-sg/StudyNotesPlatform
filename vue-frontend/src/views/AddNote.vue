@@ -403,7 +403,7 @@
             return
         }
 
-        const previewWindow = window.open('', '_blank', 'noopener')
+        const previewWindow = window.open('', '_blank')
         if (!previewWindow) {
             alert('Разрешите всплывающие окна в браузере, чтобы открыть файл')
             return

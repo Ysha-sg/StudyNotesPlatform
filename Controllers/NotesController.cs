@@ -454,7 +454,6 @@ public class NotesController : ControllerBase
     public async Task<IActionResult> GetMyNotes()
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
         var notes = await _context.Notes
             .Where(n => n.UserId == userId)
             .Include(n => n.Status)
@@ -473,13 +472,7 @@ public class NotesController : ControllerBase
                 University = n.University != null ? n.University.Name : "",
                 Subject = n.Subject != null ? n.Subject.Name : "",
                 n.DownloadsCount,
-                n.AverageRating,
-                // Добавляем причину отклонения из последней записи модерации
-                RejectionReason = _context.ModerationLogs
-                    .Where(l => l.NoteId == n.Id && (l.Action == "rejected" || l.Action == "auto_rejected"))
-                    .OrderByDescending(l => l.CreatedAt)
-                    .Select(l => l.Comment)
-                    .FirstOrDefault()
+                n.AverageRating
             })
             .ToListAsync();
 
@@ -492,22 +485,25 @@ public class NotesController : ControllerBase
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-        var history = await _context.Notes
-            .Where(n => n.UserId == userId)
-            .Include(n => n.University)
-            .Include(n => n.Subject)
-            .Include(n => n.Teacher)
-            .OrderByDescending(n => n.UploadedAt)
+        var history = await _context.NoteDownloads
+            .Where(d => d.UserId == userId)
+            .Include(d => d.Note)
+                .ThenInclude(n => n!.University)
+            .Include(d => d.Note)
+                .ThenInclude(n => n!.Subject)
+            .Include(d => d.Note)
+                .ThenInclude(n => n!.Teacher)
+            .OrderByDescending(d => d.DownloadedAt)
             .Select(n => new
             {
-                n.Id,
-                n.Title,
-                Subject = n.Subject != null ? n.Subject.Name : "",
-                Teacher = n.Teacher != null ? n.Teacher.FullName : "",
-                University = n.University != null ? n.University.Name : "",
-                Rating = n.AverageRating ?? 0,
-                DownloadsCount = n.DownloadsCount,
-                DownloadedAt = n.UploadedAt
+                Id = n.NoteId,
+                Title = n.Note != null ? n.Note.Title : "",
+                Subject = n.Note != null && n.Note.Subject != null ? n.Note.Subject.Name : "",
+                Teacher = n.Note != null && n.Note.Teacher != null ? n.Note.Teacher.FullName : "",
+                University = n.Note != null && n.Note.University != null ? n.Note.University.Name : "",
+                Rating = n.Note != null ? n.Note.AverageRating ?? 0 : 0,
+                DownloadsCount = n.Note != null ? n.Note.DownloadsCount : 0,
+                DownloadedAt = n.DownloadedAt
             })
             .ToListAsync();
 
@@ -1001,7 +997,14 @@ public class NotesController : ControllerBase
         var shouldCountDownload = !User.IsInRole("moderator") && !User.IsInRole("admin");
         if (shouldCountDownload)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             note.DownloadsCount += 1;
+            _context.NoteDownloads.Add(new NoteDownload
+            {
+                NoteId = note.Id,
+                UserId = userId,
+                DownloadedAt = DateTime.UtcNow
+            });
             await _context.SaveChangesAsync();
         }
 

@@ -579,7 +579,7 @@
 
     /* Сообщения об ошибках */
     .error-message {
-        font-size: 13px;
+        font-size: 16px;
         color: #FF6B6B;
         margin-top: 6px;
         margin-left: 12px;
@@ -592,7 +592,7 @@
         border-radius: 12px;
         margin: 16px 0;
         text-align: center;
-        font-size: 14px;
+        font-size: 18px;
     }
 
     /* Кнопка регистрации */

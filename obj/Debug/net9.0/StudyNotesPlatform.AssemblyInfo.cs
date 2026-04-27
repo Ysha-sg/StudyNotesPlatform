@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("StudyNotesPlatform")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ade4fe4adb4240608a9e04d45594ddbdcf146fef")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6f52649251942530e004c57c3d3d4ca5e2991450")]
 [assembly: System.Reflection.AssemblyProductAttribute("StudyNotesPlatform")]
 [assembly: System.Reflection.AssemblyTitleAttribute("StudyNotesPlatform")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

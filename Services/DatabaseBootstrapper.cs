@@ -23,6 +23,7 @@ public static class DatabaseBootstrapper
 
         await EnsureComplaintsTableAsync(context, cancellationToken);
         await EnsureNoteRatingsTableAsync(context, cancellationToken);
+        await EnsureNoteDownloadsTableAsync(context, cancellationToken);
         await EnsureRolesAsync(context, cancellationToken);
         await EnsureNoteStatusesAsync(context, cancellationToken);
         await EnsureNotesRatingColumnAsync(context, cancellationToken);
@@ -70,6 +71,24 @@ public static class DatabaseBootstrapper
             );
             CREATE UNIQUE INDEX IF NOT EXISTS ux_note_ratings_note_user ON note_ratings(note_id, user_id);
             CREATE INDEX IF NOT EXISTS ix_note_ratings_note_id ON note_ratings(note_id);
+            """;
+
+        await context.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+    }
+
+    private static async Task EnsureNoteDownloadsTableAsync(ApplicationDbContext context, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            CREATE TABLE IF NOT EXISTS note_downloads
+            (
+                id SERIAL PRIMARY KEY,
+                note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                downloaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS ix_note_downloads_user_id ON note_downloads(user_id);
+            CREATE INDEX IF NOT EXISTS ix_note_downloads_note_id ON note_downloads(note_id);
+            CREATE INDEX IF NOT EXISTS ix_note_downloads_downloaded_at ON note_downloads(downloaded_at);
             """;
 
         await context.Database.ExecuteSqlRawAsync(sql, cancellationToken);

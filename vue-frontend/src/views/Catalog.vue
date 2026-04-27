@@ -1,4 +1,5 @@
-﻿<template>
+﻿﻿
+<template>
     <div class="catalog-page">
         <!-- Шапка -->
         <div class="header">
