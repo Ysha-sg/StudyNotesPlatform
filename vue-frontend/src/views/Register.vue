@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="register-page">
         <button type="button" class="back-button" @click="goBack" aria-label="Назад">
             <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -98,7 +98,10 @@
                                 <span class="chevron-icon"></span>
                             </div>
                             <div v-if="isUniversityOpen" class="select-dropdown">
-                                <div v-for="university in universities"
+                                <div class="select-search">
+                                    <input v-model="universitySearch" type="text" placeholder="Начните вводить вуз" @click.stop />
+                                </div>
+                                <div v-for="university in filteredUniversities"
                                      :key="university"
                                      class="select-option"
                                      :class="{ selected: form.universityName === university }"
@@ -127,9 +130,10 @@
 </template>
 
 <script setup>
-    import { ref, reactive, onMounted, onUnmounted } from 'vue'
+    import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
     import { useRouter } from 'vue-router'
     import { useAuthStore } from '@/stores/auth'
+    import api from '@/services/api'
 
     const router = useRouter()
     const authStore = useAuthStore()
@@ -156,7 +160,14 @@
     const showPassword = ref(false)
     const showConfirmPassword = ref(false)
     const isUniversityOpen = ref(false)
-    const universities = ['ПГГПУ', 'СПбГУ', 'ПГНИУ']
+    const universities = ref([])
+    const universitySearch = ref('')
+
+    const filteredUniversities = computed(() => {
+        const query = universitySearch.value.trim().toLowerCase()
+        if (!query) return universities.value
+        return universities.value.filter((university) => university.toLowerCase().includes(query))
+    })
 
     // Очистка ошибки при вводе
     const clearError = (field) => {
@@ -170,12 +181,25 @@
 
     const toggleUniversityDropdown = () => {
         isUniversityOpen.value = !isUniversityOpen.value
+        if (isUniversityOpen.value) {
+            universitySearch.value = ''
+        }
     }
 
     const selectUniversity = (university) => {
         form.universityName = university
         clearError('universityName')
         isUniversityOpen.value = false
+        universitySearch.value = ''
+    }
+
+    const loadUniversities = async () => {
+        try {
+            const response = await api.get('/lookup/all-universities')
+            universities.value = response.data.map((university) => university.name)
+        } catch (error) {
+            console.error('Ошибка загрузки университетов:', error)
+        }
     }
 
     // Валидация формы
@@ -262,6 +286,7 @@
 
     onMounted(() => {
         document.addEventListener('click', handleClickOutside)
+        loadUniversities()
     })
 
     onUnmounted(() => {
@@ -518,30 +543,70 @@
         left: 0;
         right: 0;
         z-index: 30;
-        max-height: 130px;
+        max-height: 264px;
         overflow-y: auto;
         background: #171722;
         border: 1px solid #2A2A35;
         border-radius: 0 0 10px 10px;
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+        scrollbar-width: thin;
+        scrollbar-color: #8B7FFF rgba(255, 255, 255, 0.08);
     }
 
-        .select-dropdown::-webkit-scrollbar {
-            width: 8px;
-        }
+    .select-search {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        padding: 8px;
+        background: #171722;
+        border-bottom: 1px solid #2A2A35;
+    }
 
-        .select-dropdown::-webkit-scrollbar-thumb {
-            background: #7F8499;
-            border-radius: 999px;
-        }
+    .select-search input {
+        width: 100%;
+        height: 40px;
+        padding: 0 12px;
+        border: 1px solid #2A2A35;
+        border-radius: 10px;
+        background: #0F0F14;
+        color: #FFFFFF;
+        font-size: 18px;
+        line-height: 22px;
+        outline: none;
+    }
+
+    .select-search input:focus {
+        border-color: #6C63FF;
+        box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
+    }
+
+    .select-dropdown::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-track {
+        margin: 10px 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 999px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #9A8FFF 0%, #6C63FF 100%);
+        border: 3px solid #171722;
+        border-radius: 999px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #B2A9FF 0%, #7B73FF 100%);
+    }
 
     .select-option {
-        height: 32px;
-        padding: 0 16px;
+        min-height: 44px;
+        padding: 10px 16px;
         display: flex;
         align-items: center;
-        font-size: 16px;
-        line-height: 19px;
+        font-size: 18px;
+        line-height: 22px;
         color: #FFFFFF;
         cursor: pointer;
         transition: background 0.18s;

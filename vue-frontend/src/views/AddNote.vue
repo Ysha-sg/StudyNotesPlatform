@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="add-note-page">
         <!-- Верхняя панель -->
         <div class="top-row">
@@ -77,7 +77,10 @@
                             <span class="chevron-icon"></span>
                         </div>
                         <div v-if="isSubjectOpen" class="select-dropdown">
-                            <div v-for="subject in subjects" :key="subject.id" class="select-option" :class="{ selected: form.subjectId === subject.id }" @click="selectSubject(subject)">
+                            <div class="select-search">
+                                <input v-model="subjectSearch" type="text" placeholder="Начните вводить предмет" @click.stop />
+                            </div>
+                            <div v-for="subject in filteredSubjects" :key="subject.id" class="select-option" :class="{ selected: form.subjectId === subject.id }" @click="selectSubject(subject)">
                                 {{ subject.name }}
                             </div>
                         </div>
@@ -94,7 +97,10 @@
                             <span class="chevron-icon"></span>
                         </div>
                         <div v-if="isTeacherOpen" class="select-dropdown">
-                            <div v-for="teacher in teachers" :key="teacher.id" class="select-option" :class="{ selected: form.teacherId === teacher.id }" @click="selectTeacher(teacher)">
+                            <div class="select-search">
+                                <input v-model="teacherSearch" type="text" placeholder="Начните вводить преподавателя" @click.stop />
+                            </div>
+                            <div v-for="teacher in filteredTeachers" :key="teacher.id" class="select-option" :class="{ selected: form.teacherId === teacher.id }" @click="selectTeacher(teacher)">
                                 {{ teacher.fullName }}
                             </div>
                         </div>
@@ -103,7 +109,7 @@
                 </div>
 
                 <!-- ВУЗ -->
-                <div class="form-group">
+                <div v-if="false" class="form-group">
                     <label>ВУЗ <span class="required">*</span></label>
                     <div class="custom-select" :class="{ open: isUniversityOpen, error: errors.universityId }">
                         <div class="select-trigger" @click="toggleUniversityDropdown">
@@ -222,7 +228,6 @@
         description: '',
         subjectId: null,
         teacherId: null,
-        universityId: null,
         filePath: ''
     })
 
@@ -231,8 +236,7 @@
         title: '',
         description: '',
         subjectId: null,
-        teacherId: null,
-        universityId: null
+        teacherId: null
     })
 
     // Ошибки
@@ -241,7 +245,6 @@
         description: '',
         subjectId: '',
         teacherId: '',
-        universityId: '',
         file: ''
     })
 
@@ -254,11 +257,25 @@
     const subjects = ref([])
     const teachers = ref([])
     const universities = ref([])
+    const subjectSearch = ref('')
+    const teacherSearch = ref('')
 
     // Выбранные значения
     const selectedSubjectName = ref('')
     const selectedTeacherName = ref('')
-    const selectedUniversityName = ref('')
+    const selectedUniversityName = ref(authStore.user?.universityName || '')
+
+    const filteredSubjects = computed(() => {
+        const query = subjectSearch.value.trim().toLowerCase()
+        if (!query) return subjects.value
+        return subjects.value.filter((subject) => subject.name.toLowerCase().includes(query))
+    })
+
+    const filteredTeachers = computed(() => {
+        const query = teacherSearch.value.trim().toLowerCase()
+        if (!query) return teachers.value
+        return teachers.value.filter((teacher) => teacher.fullName.toLowerCase().includes(query))
+    })
 
     // Файл (только для добавления)
     const fileInput = ref(null)
@@ -279,7 +296,6 @@
             form.description = note.value.description || ''
             form.subjectId = note.value.subjectId
             form.teacherId = note.value.teacherId
-            form.universityId = note.value.universityId
 
             // Устанавливаем отображаемые значения
             const subject = subjects.value.find(s => s.id === note.value.subjectId)
@@ -287,9 +303,6 @@
 
             const teacher = teachers.value.find(t => t.id === note.value.teacherId)
             if (teacher) selectedTeacherName.value = teacher.fullName
-
-            const university = universities.value.find(u => u.id === note.value.universityId)
-            if (university) selectedUniversityName.value = university.name
         } catch (error) {
             console.error('Ошибка загрузки конспекта:', error)
         }
@@ -342,25 +355,24 @@
     const toggleSubjectDropdown = () => {
         isSubjectOpen.value = !isSubjectOpen.value
         isTeacherOpen.value = false
-        isUniversityOpen.value = false
+        if (isSubjectOpen.value) subjectSearch.value = ''
     }
 
     const toggleTeacherDropdown = () => {
         isTeacherOpen.value = !isTeacherOpen.value
         isSubjectOpen.value = false
-        isUniversityOpen.value = false
+        if (isTeacherOpen.value) teacherSearch.value = ''
     }
 
     const toggleUniversityDropdown = () => {
         isUniversityOpen.value = !isUniversityOpen.value
-        isSubjectOpen.value = false
-        isTeacherOpen.value = false
     }
 
     const selectSubject = (subject) => {
         form.subjectId = subject.id
         selectedSubjectName.value = subject.name
         isSubjectOpen.value = false
+        subjectSearch.value = ''
         clearError('subjectId')
     }
 
@@ -368,14 +380,12 @@
         form.teacherId = teacher.id
         selectedTeacherName.value = teacher.fullName
         isTeacherOpen.value = false
+        teacherSearch.value = ''
         clearError('teacherId')
     }
 
-    const selectUniversity = (university) => {
-        form.universityId = university.id
-        selectedUniversityName.value = university.name
+    const selectUniversity = () => {
         isUniversityOpen.value = false
-        clearError('universityId')
     }
 
     const clearError = (field) => {
@@ -462,13 +472,6 @@
             errors.teacherId = ''
         }
 
-        if (!form.universityId) {
-            errors.universityId = 'Выберите ВУЗ'
-            isValid = false
-        } else {
-            errors.universityId = ''
-        }
-
         if (!isEditMode.value && !selectedFile.value) {
             errors.file = 'Загрузите файл'
             isValid = false
@@ -488,7 +491,12 @@
 
     const handleFileSelect = (event) => {
         const file = event.target.files[0]
-        if (file && file.type === 'application/pdf') {
+        const isPdf = file && (
+            file.type === 'application/pdf' ||
+            file.name?.toLowerCase().endsWith('.pdf')
+        )
+
+        if (isPdf) {
             selectedFile.value = file
             clearError('file')
         } else if (file) {
@@ -500,7 +508,12 @@
         if (isEditMode.value) return
         isDragOver.value = false
         const file = event.dataTransfer.files[0]
-        if (file && file.type === 'application/pdf') {
+        const isPdf = file && (
+            file.type === 'application/pdf' ||
+            file.name?.toLowerCase().endsWith('.pdf')
+        )
+
+        if (isPdf) {
             selectedFile.value = file
             clearError('file')
         } else if (file) {
@@ -524,7 +537,7 @@
     // Загрузка данных для комбобоксов
     const loadSubjects = async () => {
         try {
-            const response = await api.get('/lookup/all-subjects')
+            const response = await api.get('/lookup/subjects')
             subjects.value = response.data
         } catch (error) {
             console.error('Ошибка загрузки предметов:', error)
@@ -533,7 +546,7 @@
 
     const loadTeachers = async () => {
         try {
-            const response = await api.get('/lookup/all-teachers')
+            const response = await api.get('/lookup/teachers')
             teachers.value = response.data
         } catch (error) {
             console.error('Ошибка загрузки преподавателей:', error)
@@ -562,8 +575,7 @@
                     title: form.title,
                     description: form.description,
                     subjectId: form.subjectId,
-                    teacherId: form.teacherId,
-                    universityId: form.universityId
+                    teacherId: form.teacherId
                 })
             } else {
                 // Режим добавления
@@ -571,12 +583,15 @@
                 formData.append('Title', form.title)
                 formData.append('Description', form.description)
                 formData.append('SubjectId', form.subjectId)
+                formData.append('SubjectName', selectedSubjectName.value)
                 formData.append('TeacherId', form.teacherId)
-                formData.append('UniversityId', form.universityId)
+                formData.append('TeacherName', selectedTeacherName.value)
                 formData.append('File', selectedFile.value)
 
                 await api.post('/notes/upload', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
                 })
             }
 
@@ -587,7 +602,20 @@
             }, 2000)
         } catch (error) {
             console.error('Ошибка:', error)
-            alert(error.response?.data?.message || 'Ошибка при сохранении')
+            const responseData = error.response?.data
+            const validationErrors = responseData?.errors
+                ? Object.values(responseData.errors).flat().join('\n')
+                : ''
+            const serverMessage =
+                responseData?.message ||
+                responseData?.detail ||
+                responseData?.title ||
+                validationErrors ||
+                error.message ||
+                error.response?.statusText ||
+                (typeof responseData === 'string' ? responseData : '')
+
+            alert(serverMessage || 'Ошибка при сохранении')
         } finally {
             isSubmitting.value = false
         }
@@ -609,7 +637,6 @@
         document.addEventListener('click', handleClickOutside)
         await loadSubjects()
         await loadTeachers()
-        await loadUniversities()
         if (isEditMode.value) {
             await loadNoteForEdit()
         }
@@ -630,8 +657,8 @@
     .add-note-page {
         min-height: 100vh;
         background: #0F0F14;
-        padding: 56px 80px 64px;
-        max-width: 1440px;
+        padding: 40px 64px 40px;
+        max-width: 1360px;
         margin: 0 auto;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
@@ -671,18 +698,23 @@
     .logo-area {
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 12px;
         cursor: pointer;
     }
 
     .logo-icon {
-        width: 55px;
-        height: 50px;
+        width: 56px;
+        height: 56px;
         border-radius: 10px;
         background: #2A2348;
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    .logo-icon svg {
+        width: 44px;
+        height: 44px;
     }
 
     .logo-text {
@@ -765,19 +797,18 @@
     .form-container {
         margin-left: 49px;
         display: grid;
-        grid-template-columns: 850px 370px;
+        grid-template-columns: minmax(0, 780px) 340px;
         align-items: start;
-        gap: 18px;
-        max-width: 1238px;
+        gap: 16px;
+        max-width: 1136px;
     }
 
     .main-form {
-        width: 850px;
-        min-height: 977px;
+        width: 100%;
         background: #1A1A22;
         border: 1px solid #2A2A35;
         border-radius: 20px;
-        padding: 24px 38px 28px;
+        padding: 22px 30px 24px;
     }
 
     .form-group {
@@ -816,7 +847,7 @@
     }
 
     .input-wrapper textarea {
-        min-height: 160px;
+        min-height: 132px;
         resize: vertical;
         padding: 14px 18px;
         line-height: 21px;
@@ -910,31 +941,71 @@
         left: 0;
         right: 0;
         z-index: 40;
-        max-height: 130px;
+        max-height: 264px;
         overflow-y: auto;
         background: #171722;
         border: 1px solid #2A2A35;
         border-radius: 0 0 10px 10px;
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+        scrollbar-width: thin;
+        scrollbar-color: #8B7FFF rgba(255, 255, 255, 0.08);
     }
 
-        .select-dropdown::-webkit-scrollbar {
-            width: 8px;
-        }
+    .select-search {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        padding: 8px;
+        background: #171722;
+        border-bottom: 1px solid #2A2A35;
+    }
 
-        .select-dropdown::-webkit-scrollbar-thumb {
-            background: #7F8499;
-            border-radius: 999px;
-        }
+    .select-search input {
+        width: 100%;
+        height: 40px;
+        padding: 0 12px;
+        border: 1px solid #2A2A35;
+        border-radius: 10px;
+        background: #0F0F14;
+        color: #FFFFFF;
+        font-size: 18px;
+        line-height: 22px;
+        outline: none;
+    }
+
+    .select-search input:focus {
+        border-color: #6C63FF;
+        box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
+    }
+
+    .select-dropdown::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-track {
+        margin: 10px 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 999px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #9A8FFF 0%, #6C63FF 100%);
+        border: 3px solid #171722;
+        border-radius: 999px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #B2A9FF 0%, #7B73FF 100%);
+    }
 
     .select-option {
-        height: 32px;
-        padding: 0 16px;
+        min-height: 44px;
+        padding: 10px 16px;
         display: flex;
         align-items: center;
         color: #FFFFFF;
-        font-size: 16px;
-        line-height: 19px;
+        font-size: 18px;
+        line-height: 22px;
         cursor: pointer;
         transition: background 0.18s ease;
     }
@@ -950,7 +1021,7 @@
 
     .drop-zone {
         width: 100%;
-        min-height: 180px;
+        min-height: 146px;
         border: 2px dashed #2A2A35;
         border-radius: 16px;
         background: #1A1A22;
@@ -997,12 +1068,12 @@
     }
 
     .selected-file {
-        height: 117px;
+        min-height: 94px;
         margin-top: 2px;
         border-radius: 12px;
         border: 1px solid transparent;
         background: #0F0F14;
-        padding: 0 26px 0 20px;
+        padding: 16px 22px 16px 18px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -1021,8 +1092,8 @@
     }
 
     .file-icon-small {
-        width: 66px;
-        height: 66px;
+        width: 58px;
+        height: 58px;
         border-radius: 10px;
         background: #2A2348;
         display: flex;
@@ -1039,12 +1110,12 @@
         }
 
     .file-name {
-        max-width: 520px;
+        max-width: 460px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 20px;
-        line-height: 24px;
+        font-size: 18px;
+        line-height: 22px;
         font-weight: 500;
         color: #FFFFFF;
     }
@@ -1100,8 +1171,8 @@
 
     .form-buttons {
         display: flex;
-        gap: 31px;
-        margin-top: 4px;
+        gap: 18px;
+        margin-top: 8px;
     }
 
     .cancel-btn,
@@ -1116,19 +1187,20 @@
     }
 
     .cancel-btn {
-        width: 349px;
+        flex: 0 0 250px;
         border: 1px solid #2A2A35;
-        background: #0F0F14;
+        background: #111118;
         color: #FFFFFF;
     }
 
         .cancel-btn:hover {
-            border-color: #6C63FF;
-            box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.3);
+            border-color: #3A3A4D;
+            background: #171720;
+            box-shadow: none;
         }
 
     .submit-btn {
-        width: 408px;
+        flex: 1 1 auto;
         border: 1px solid #2A2A35;
         background: #6C63FF;
         color: #FFFFFF;
@@ -1306,6 +1378,7 @@
         .cancel-btn,
         .submit-btn {
             width: 100%;
+            flex: 1 1 auto;
         }
     }
 
@@ -1365,3 +1438,4 @@
         }
     }
 </style>
+

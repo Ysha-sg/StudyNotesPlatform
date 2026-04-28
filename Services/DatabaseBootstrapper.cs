@@ -26,6 +26,7 @@ public static class DatabaseBootstrapper
         await EnsureNoteDownloadsTableAsync(context, cancellationToken);
         await EnsureRolesAsync(context, cancellationToken);
         await EnsureNoteStatusesAsync(context, cancellationToken);
+        await EnsureReferenceDataAsync(context, cancellationToken);
         await EnsureNotesRatingColumnAsync(context, cancellationToken);
         await EnsureTxtNoteFilesConvertedAsync(context, env, logger, cancellationToken);
         await EnsureDefaultModeratorAsync(context, logger, cancellationToken);
@@ -147,6 +148,102 @@ public static class DatabaseBootstrapper
             if (!string.Equals(existingStatus.Description, status.Description, StringComparison.Ordinal))
             {
                 existingStatus.Description = status.Description;
+            }
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task EnsureReferenceDataAsync(ApplicationDbContext context, CancellationToken cancellationToken)
+    {
+        var catalog = new[]
+        {
+            new UniversitySeed(
+                "ПГГПУ",
+                "Пермь",
+                ["Педагогика", "Психология образования", "Методика преподавания математики", "История России", "Философия"],
+                ["Соколова Анна Викторовна", "Кузнецов Илья Сергеевич", "Морозова Елена Павловна"]),
+            new UniversitySeed(
+                "ПГНИУ",
+                "Пермь",
+                ["Программирование", "Базы данных", "Дискретная математика", "Операционные системы", "Философия"],
+                ["Иванов Дмитрий Алексеевич", "Петрова Марина Олеговна", "Смирнов Кирилл Андреевич", "Кузнецов Илья Сергеевич", "Морозова Елена Павловна"]),
+            new UniversitySeed(
+                "СПбГУ",
+                "Санкт-Петербург",
+                ["Математический анализ", "Теория вероятностей", "Алгоритмы и структуры данных", "Философия"],
+                ["Васильева Наталья Игоревна", "Орлов Максим Петрович", "Андреева Софья Романовна"]),
+        };
+
+        var universitiesByName = await context.Universities
+            .ToDictionaryAsync(u => u.Name, StringComparer.Ordinal, cancellationToken);
+
+        foreach (var item in catalog)
+        {
+            if (!universitiesByName.TryGetValue(item.Name, out var university))
+            {
+                university = new University
+                {
+                    Name = item.Name,
+                    City = item.City
+                };
+                context.Universities.Add(university);
+                universitiesByName[item.Name] = university;
+                continue;
+            }
+
+            if (!string.Equals(university.City, item.City, StringComparison.Ordinal))
+            {
+                university.City = item.City;
+            }
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        universitiesByName = await context.Universities
+            .ToDictionaryAsync(u => u.Name, StringComparer.Ordinal, cancellationToken);
+
+        var existingSubjects = await context.Subjects.ToListAsync(cancellationToken);
+        var existingTeachers = await context.Teachers.ToListAsync(cancellationToken);
+
+        foreach (var item in catalog)
+        {
+            var university = universitiesByName[item.Name];
+
+            foreach (var subjectName in item.Subjects)
+            {
+                var subjectExists = existingSubjects.Any(s =>
+                    s.UniversityId == university.Id &&
+                    string.Equals(s.Name, subjectName, StringComparison.Ordinal));
+
+                if (!subjectExists)
+                {
+                    var subject = new Subject
+                    {
+                        UniversityId = university.Id,
+                        Name = subjectName
+                    };
+                    context.Subjects.Add(subject);
+                    existingSubjects.Add(subject);
+                }
+            }
+
+            foreach (var teacherName in item.Teachers)
+            {
+                var teacherExists = existingTeachers.Any(t =>
+                    t.UniversityId == university.Id &&
+                    string.Equals(t.FullName, teacherName, StringComparison.Ordinal));
+
+                if (!teacherExists)
+                {
+                    var teacher = new Teacher
+                    {
+                        UniversityId = university.Id,
+                        FullName = teacherName
+                    };
+                    context.Teachers.Add(teacher);
+                    existingTeachers.Add(teacher);
+                }
             }
         }
 
@@ -409,4 +506,10 @@ public static class DatabaseBootstrapper
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
         return Convert.ToBase64String(bytes);
     }
+
+    private sealed record UniversitySeed(
+        string Name,
+        string City,
+        IReadOnlyList<string> Subjects,
+        IReadOnlyList<string> Teachers);
 }

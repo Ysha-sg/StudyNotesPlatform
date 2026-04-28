@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="catalog-page">
         <!-- Шапка -->
         <div class="header">
@@ -46,21 +46,60 @@
         <!-- Фильтры -->
         <div class="filters">
             <div class="filter-item">
-                <select v-model="filters.university">
+                <div class="custom-select" :class="{ open: openDropdown === 'university' }">
+                    <button type="button" class="select-trigger" @click="toggleDropdown('university')">
+                        <span class="select-label" :class="{ placeholder: !filters.universityName }">{{ filters.universityName || 'Все вузы' }}</span>
+                        <span class="select-chevron"></span>
+                    </button>
+                    <div v-if="openDropdown === 'university'" class="select-dropdown">
+                        <div class="select-search">
+                            <input v-model="universitySearch" type="text" placeholder="Начните вводить вуз" @click.stop />
+                        </div>
+                        <button type="button" class="select-option" :class="{ selected: !filters.universityName }" @click="selectUniversity(null)">Все вузы</button>
+                        <button v-for="uni in filteredUniversityOptions" :key="uni.id" type="button" class="select-option" :class="{ selected: filters.universityId === uni.id }" @click="selectUniversity(uni)">{{ uni.name }}</button>
+                    </div>
+                </div>
+                <select v-if="false" v-model="filters.universityId">
                     <option value="">Все вузы</option>
-                    <option v-for="uni in universities" :key="uni" :value="uni">{{ uni }}</option>
+                    <option v-for="uni in universities" :key="uni.id" :value="uni.id">{{ uni.name }}</option>
                 </select>
             </div>
             <div class="filter-item">
-                <select v-model="filters.subject">
+                <div class="custom-select" :class="{ open: openDropdown === 'subject' }">
+                    <button type="button" class="select-trigger" @click="toggleDropdown('subject')">
+                        <span class="select-label" :class="{ placeholder: !filters.subjectName }">{{ filters.subjectName || 'Все предметы' }}</span>
+                        <span class="select-chevron"></span>
+                    </button>
+                    <div v-if="openDropdown === 'subject'" class="select-dropdown">
+                        <div class="select-search">
+                            <input v-model="subjectSearch" type="text" placeholder="Начните вводить дисциплину" @click.stop />
+                        </div>
+                        <button type="button" class="select-option" :class="{ selected: !filters.subjectName }" @click="selectSubject(null)">Все предметы</button>
+                        <button v-for="subject in filteredSubjectOptions" :key="subject.key" type="button" class="select-option" :class="{ selected: filters.subjectName === subject.name }" @click="selectSubject(subject)">{{ subject.name }}</button>
+                    </div>
+                </div>
+                <select v-if="false" v-model="filters.subjectId">
                     <option value="">Все предметы</option>
-                    <option v-for="subj in subjects" :key="subj" :value="subj">{{ subj }}</option>
+                    <option v-for="subj in filteredSubjects" :key="subj.id" :value="subj.id">{{ subj.name }}</option>
                 </select>
             </div>
             <div class="filter-item">
-                <select v-model="filters.teacher">
+                <div class="custom-select" :class="{ open: openDropdown === 'teacher' }">
+                    <button type="button" class="select-trigger" @click="toggleDropdown('teacher')">
+                        <span class="select-label" :class="{ placeholder: !filters.teacherName }">{{ filters.teacherName || 'Все преподаватели' }}</span>
+                        <span class="select-chevron"></span>
+                    </button>
+                    <div v-if="openDropdown === 'teacher'" class="select-dropdown">
+                        <div class="select-search">
+                            <input v-model="teacherSearch" type="text" placeholder="Начните вводить преподавателя" @click.stop />
+                        </div>
+                        <button type="button" class="select-option" :class="{ selected: !filters.teacherName }" @click="selectTeacher(null)">Все преподаватели</button>
+                        <button v-for="teacher in filteredTeacherOptions" :key="teacher.key" type="button" class="select-option" :class="{ selected: filters.teacherName === teacher.fullName }" @click="selectTeacher(teacher)">{{ teacher.fullName }}</button>
+                    </div>
+                </div>
+                <select v-if="false" v-model="filters.teacherId">
                     <option value="">Все преподаватели</option>
-                    <option v-for="teacher in allTeachers" :key="teacher" :value="teacher">{{ teacher }}</option>
+                    <option v-for="teacher in filteredTeachers" :key="teacher.id" :value="teacher.id">{{ teacher.fullName }}</option>
                 </select>
             </div>
         </div>
@@ -69,12 +108,16 @@
 
         <div class="notes-grid">
             <div v-for="note in paginatedNotes" :key="note.id" class="note-card">
-                <div class="card-icon">
-                    <div class="file-icon"></div>
+                <div class="card-top">
+                    <div class="card-icon">
+                        <div class="file-icon"></div>
+                    </div>
+                    <div class="card-title-block">
+                        <h3>{{ note.title }}</h3>
+                        <div class="subject">{{ note.subject }}</div>
+                    </div>
                 </div>
                 <div class="card-content">
-                    <h3>{{ note.title }}</h3>
-                    <div class="subject">{{ note.subject }}</div>
                     <div class="teacher-university">
                         <div>Преподаватель: {{ note.teacher }}</div>
                         <div>Вуз: {{ note.university }}</div>
@@ -126,11 +169,18 @@
     const favoritesStore = useFavoritesStore()
 
     const isMenuOpen = ref(false)
+    const openDropdown = ref('')
     const searchQuery = ref('')
+    const universitySearch = ref('')
+    const subjectSearch = ref('')
+    const teacherSearch = ref('')
     const filters = reactive({
-        university: '',
-        subject: '',
-        teacher: ''
+        universityId: '',
+        universityName: '',
+        subjectId: '',
+        subjectName: '',
+        teacherId: '',
+        teacherName: ''
     })
 
     const universities = ref([])
@@ -142,14 +192,56 @@
     // Конспекты загружаем из API
     const notes = ref([])
 
+    const filteredSubjects = computed(() => {
+        if (!filters.universityId) {
+            return subjects.value
+        }
+
+        return subjects.value.filter((subject) => String(subject.universityId) === String(filters.universityId))
+    })
+
+    const filteredTeachers = computed(() => {
+        if (!filters.universityId) {
+            return allTeachers.value
+        }
+
+        return allTeachers.value.filter((teacher) => String(teacher.universityId) === String(filters.universityId))
+    })
+
+    const filteredUniversityOptions = computed(() => {
+        const query = universitySearch.value.trim().toLowerCase()
+        if (!query) return universities.value
+        return universities.value.filter((university) => university.name.toLowerCase().includes(query))
+    })
+
+    const filteredSubjectOptions = computed(() => {
+        const items = filters.universityId
+            ? filteredSubjects.value.map((subject) => ({ key: `id-${subject.id}`, name: subject.name, id: subject.id }))
+            : Array.from(new Map(subjects.value.map((subject) => [subject.name.toLowerCase(), { key: `name-${subject.name}`, name: subject.name }])).values())
+
+        const query = subjectSearch.value.trim().toLowerCase()
+        if (!query) return items
+        return items.filter((subject) => subject.name.toLowerCase().includes(query))
+    })
+
+    const filteredTeacherOptions = computed(() => {
+        const items = filters.universityId
+            ? filteredTeachers.value.map((teacher) => ({ key: `id-${teacher.id}`, fullName: teacher.fullName, id: teacher.id }))
+            : Array.from(new Map(allTeachers.value.map((teacher) => [teacher.fullName.toLowerCase(), { key: `name-${teacher.fullName}`, fullName: teacher.fullName }])).values())
+
+        const query = teacherSearch.value.trim().toLowerCase()
+        if (!query) return items
+        return items.filter((teacher) => teacher.fullName.toLowerCase().includes(query))
+    })
+
     // Фильтрация конспектов
     const filteredNotes = computed(() => {
         return notes.value.filter(note => {
             const matchSearch = note.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                 note.subject.toLowerCase().includes(searchQuery.value.toLowerCase())
-            const matchUniversity = !filters.university || note.university === filters.university
-            const matchSubject = !filters.subject || note.subject === filters.subject
-            const matchTeacher = !filters.teacher || note.teacher === filters.teacher
+            const matchUniversity = !filters.universityId || String(note.universityId) === String(filters.universityId)
+            const matchSubject = !filters.subjectName || note.subject === filters.subjectName
+            const matchTeacher = !filters.teacherName || note.teacher === filters.teacherName
             return matchSearch && matchUniversity && matchSubject && matchTeacher
         })
     })
@@ -177,7 +269,7 @@
     const loadUniversities = async () => {
         try {
             const response = await api.get('/lookup/all-universities')
-            universities.value = response.data.map(u => u.name)
+            universities.value = response.data
         } catch (error) {
             console.error('Ошибка загрузки университетов:', error)
         }
@@ -186,7 +278,7 @@
     const loadSubjects = async () => {
         try {
             const response = await api.get('/lookup/all-subjects')
-            subjects.value = response.data.map(s => s.name)
+            subjects.value = response.data
         } catch (error) {
             console.error('Ошибка загрузки предметов:', error)
         }
@@ -195,13 +287,51 @@
     const loadTeachers = async () => {
         try {
             const response = await api.get('/lookup/all-teachers')
-            allTeachers.value = response.data.map(t => t.fullName)
+            allTeachers.value = response.data
         } catch (error) {
             console.error('Ошибка загрузки преподавателей:', error)
         }
     }
 
     // Методы меню
+    const toggleDropdown = (name) => {
+        openDropdown.value = openDropdown.value === name ? '' : name
+        if (openDropdown.value === 'university') universitySearch.value = ''
+        if (openDropdown.value === 'subject') subjectSearch.value = ''
+        if (openDropdown.value === 'teacher') teacherSearch.value = ''
+    }
+
+    const selectUniversity = (university) => {
+        filters.universityId = university?.id ?? ''
+        filters.universityName = university?.name ?? ''
+        openDropdown.value = ''
+        universitySearch.value = ''
+
+        if (filters.subjectName && !filteredSubjectOptions.value.some((subject) => subject.name === filters.subjectName)) {
+            filters.subjectId = ''
+            filters.subjectName = ''
+        }
+
+        if (filters.teacherName && !filteredTeacherOptions.value.some((teacher) => teacher.fullName === filters.teacherName)) {
+            filters.teacherId = ''
+            filters.teacherName = ''
+        }
+    }
+
+    const selectSubject = (subject) => {
+        filters.subjectId = subject?.id ?? ''
+        filters.subjectName = subject?.name ?? ''
+        openDropdown.value = ''
+        subjectSearch.value = ''
+    }
+
+    const selectTeacher = (teacher) => {
+        filters.teacherId = teacher?.id ?? ''
+        filters.teacherName = teacher?.fullName ?? ''
+        openDropdown.value = ''
+        teacherSearch.value = ''
+    }
+
     const toggleMenu = () => {
         isMenuOpen.value = !isMenuOpen.value
     }
@@ -270,6 +400,9 @@
     }
 
     const handleClickOutside = (event) => {
+        if (!event.target.closest('.custom-select')) {
+            openDropdown.value = ''
+        }
         if (!event.target.closest('.avatar-menu')) {
             isMenuOpen.value = false
         }
@@ -288,11 +421,23 @@
     })
 
     watch(
-        [searchQuery, () => filters.university, () => filters.subject, () => filters.teacher],
+        [searchQuery, () => filters.universityId, () => filters.subjectName, () => filters.teacherName],
         () => {
             currentPage.value = 1
         }
     )
+
+    watch(() => filters.universityId, () => {
+        if (filters.subjectName && !filteredSubjectOptions.value.some((subject) => subject.name === filters.subjectName)) {
+            filters.subjectId = ''
+            filters.subjectName = ''
+        }
+
+        if (filters.teacherName && !filteredTeacherOptions.value.some((teacher) => teacher.fullName === filters.teacherName)) {
+            filters.teacherId = ''
+            filters.teacherName = ''
+        }
+    })
 
     watch(totalPages, (pagesCount) => {
         if (currentPage.value > pagesCount) {
@@ -375,6 +520,7 @@
         border-radius: 14px;
         box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.4);
         z-index: 100;
+        overflow: hidden;
     }
 
     .user-name {
@@ -451,33 +597,126 @@
         margin-bottom: 20px;
     }
 
-        .filter-item select,
-        .filter-item input {
-            width: 100%;
-            height: 56px;
-            padding: 13px 52px 14px 15px;
-            background: #1A1A22;
-            border: 1px solid #2A2A35;
-            border-radius: 16px;
-            font-size: 24px;
-            line-height: 29px;
-            color: #FFFFFF;
-            appearance: none;
-            cursor: pointer;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
+    .custom-select {
+        position: relative;
+    }
 
-        .filter-item select {
-            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="%23FFFFFF" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="m6 9 6 6 6-6"/%3E%3C/svg%3E');
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-        }
+    .select-trigger {
+        width: 100%;
+        min-height: 56px;
+        padding: 13px 52px 14px 15px;
+        background: #1A1A22;
+        border: 1px solid #2A2A35;
+        border-radius: 16px;
+        color: #FFFFFF;
+        font-size: 24px;
+        line-height: 29px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
 
-        .filter-item select:focus,
-        .filter-item input:focus {
-            outline: none;
-            border-color: #8B7FFF;
-        }
+    .select-trigger:hover,
+    .custom-select.open .select-trigger {
+        border-color: #8B7FFF;
+        box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
+    }
+
+    .select-label.placeholder {
+        color: #A0A0B0;
+    }
+
+    .select-chevron {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        width: 28px;
+        height: 28px;
+        transform: translateY(-50%);
+        background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="%23FFFFFF" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="m6 9 6 6 6-6"/%3E%3C/svg%3E') no-repeat center;
+        pointer-events: none;
+    }
+
+    .select-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        z-index: 40;
+        max-height: 264px;
+        overflow-y: auto;
+        background: #1A1A22;
+        border: 1px solid #2A2A35;
+        border-radius: 16px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+        scrollbar-width: thin;
+        scrollbar-color: #8B7FFF rgba(255, 255, 255, 0.08);
+    }
+
+    .select-search {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        padding: 8px;
+        background: #1A1A22;
+        border-bottom: 1px solid #2A2A35;
+    }
+
+    .select-search input {
+        width: 100%;
+        height: 40px;
+        padding: 0 12px;
+        background: #0F0F14;
+        border: 1px solid #2A2A35;
+        border-radius: 10px;
+        color: #FFFFFF;
+        font-size: 20px;
+        line-height: 24px;
+        outline: none;
+    }
+
+    .select-search input:focus {
+        border-color: #8B7FFF;
+    }
+
+    .select-dropdown::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-track {
+        margin: 10px 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 999px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #9A8FFF 0%, #6C63FF 100%);
+        border: 3px solid #1A1A22;
+        border-radius: 999px;
+    }
+
+    .select-dropdown::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #B2A9FF 0%, #7B73FF 100%);
+    }
+
+    .select-option {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 16px;
+        border: none;
+        background: transparent;
+        color: #FFFFFF;
+        font-size: 20px;
+        line-height: 24px;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .select-option:hover,
+    .select-option.selected {
+        background: rgba(108, 99, 255, 0.18);
+    }
 
     .results-count {
         font-size: 18px;
@@ -538,7 +777,6 @@
         border: 1px solid #2A2A35;
         border-radius: 20px;
         padding: 20px 28px 20px 29px;
-        display: flex;
         position: relative;
         transition: transform 0.2s, box-shadow 0.2s;
         min-height: 260px;
@@ -550,6 +788,13 @@
             box-shadow: 0px 8px 4px rgba(108, 99, 255, 0.15);
         }
 
+    .card-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 24px;
+        margin-bottom: 20px;
+    }
+
     .card-icon {
         width: 62px;
         height: 66px;
@@ -558,7 +803,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 24px;
         flex-shrink: 0;
     }
 
@@ -569,20 +813,25 @@
         background-size: contain;
     }
 
-    .card-content {
+    .card-title-block {
+        min-width: 0;
         flex: 1;
+        padding-right: 56px;
+    }
+
+    .card-content {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         min-width: 0;
     }
 
-        .card-content h3 {
+        .card-title-block h3 {
             font-size: 26px;
             line-height: 31px;
             font-weight: 700;
             color: #FFFFFF;
-            margin: 0 26px 8px 0;
+            margin: 0 0 8px 0;
         }
 
     .subject {
@@ -590,15 +839,15 @@
         line-height: 22px;
         font-weight: 700;
         color: #A0A0B0;
-        margin-bottom: 14px;
+        margin-bottom: 4px;
     }
 
     .teacher-university {
         font-size: 18px;
         font-weight: 700;
         color: #9A9A9F;
-        line-height: 30px;
-        margin-bottom: 14px;
+        line-height: 24px;
+        margin-bottom: 10px;
     }
 
     .card-footer {
@@ -656,8 +905,7 @@
         }
 
     .search-bar:hover,
-    .filter-item select:hover,
-    .filter-item input:hover {
+    .select-trigger:hover {
         border-color: #6C63FF;
         box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
     }
@@ -670,8 +918,8 @@
     }
 
     .heart {
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%237F8499" stroke-width="2"%3E%3Cpath d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/%3E%3C/svg%3E') no-repeat center;
         background-size: contain;
         transition: all 0.2s;
@@ -742,8 +990,7 @@
             gap: 12px;
         }
 
-        .filter-item select,
-        .filter-item input {
+        .select-trigger {
             font-size: 18px;
             padding: 12px 16px;
         }

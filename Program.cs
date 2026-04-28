@@ -25,11 +25,16 @@ builder.Services.AddControllers()
     {
         options.InvalidModelStateResponseFactory = context =>
         {
+            var firstError = context.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage) ? error.Exception?.Message : error.ErrorMessage)
+                .FirstOrDefault(message => !string.IsNullOrWhiteSpace(message));
+
             var problemDetails = new ValidationProblemDetails(context.ModelState)
             {
                 Status = StatusCodes.Status400BadRequest,
                 Title = "Ошибка валидации",
-                Detail = "Проверьте корректность переданных данных.",
+                Detail = firstError ?? "Проверьте корректность переданных данных.",
                 Instance = context.HttpContext.Request.Path
             };
             problemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;

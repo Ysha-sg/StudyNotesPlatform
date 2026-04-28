@@ -43,7 +43,7 @@
                 <button class="tab-btn complaints" :class="{ active: activeTab === 'complaints' }" @click="activeTab = 'complaints'">
                     <span class="tab-icon"></span>
                     <span class="tab-label">Жалобы</span>
-                    <span class="tab-badge" :class="activeTab === 'complaints' ? 'tab-badge-purple' : 'tab-badge-gray'">{{ openComplaints.length }}</span>
+                    <span class="tab-badge" :class="activeTab === 'complaints' ? 'tab-badge-danger' : 'tab-badge-gray'">{{ openComplaints.length }}</span>
                 </button>
             </nav>
 
@@ -54,8 +54,10 @@
                         <p class="card-line">Предмет: {{ note.subject }}</p>
                         <p class="card-line">ВУЗ: {{ note.university }}</p>
                     </div>
-                    <p class="card-line pending-author">Автор: {{ note.author }}</p>
-                    <p class="date pending-date">Дата загрузки: {{ formatDate(note.uploadedAt) }}</p>
+                    <div class="card-secondary-row pending-secondary-row">
+                        <p class="card-line pending-author">Автор: {{ note.author }}</p>
+                        <p class="date pending-date">Дата загрузки: {{ formatDate(note.uploadedAt) }}</p>
+                    </div>
                     <button class="open-btn pending-open-btn" @click="openNoteForModeration(note.id)">Открыть для проверки</button>
                 </article>
 
@@ -87,8 +89,8 @@
                         </div>
                     </div>
 
-                    <p class="card-line history-author">Автор: {{ item.author || "—" }}</p>
-                    <div class="history-center-info">
+                    <div class="card-secondary-row history-secondary-row">
+                        <p class="card-line history-author">Автор: {{ item.author || "—" }}</p>
                         <p class="date history-upload-date">Дата загрузки: {{ formatDate(item.uploadedAt) }}</p>
                     </div>
                     <button class="open-btn history-open-btn" @click="openNoteForModeration(item.noteId)">Открыть для проверки</button>
@@ -347,6 +349,10 @@
         border-bottom: 2px solid #6c63ff;
     }
 
+    .tab-btn.complaints.active {
+        color: #ff7883;
+    }
+
     .tab-btn.complaints.active::after {
         border-bottom-color: #ef4444;
     }
@@ -390,6 +396,11 @@
         color: #a0a0b0;
     }
 
+    .tab-badge-danger {
+        background: rgba(180, 43, 56, 0.22);
+        color: #ff7883;
+    }
+
     .cards {
         display: flex;
         flex-direction: column;
@@ -413,7 +424,7 @@
         grid-template-columns: minmax(0, 1fr) auto 408px;
         grid-template-areas:
             'meta . .'
-            'author date action';
+            'secondary secondary action';
         row-gap: 10px;
         align-items: center;
     }
@@ -423,7 +434,7 @@
         grid-template-columns: minmax(0, 1fr) auto 408px;
         grid-template-areas:
             'meta top top'
-            'author center action';
+            'secondary secondary action';
         row-gap: 10px;
         align-items: center;
     }
@@ -432,7 +443,7 @@
         min-height: 294px;
         grid-template-areas:
             'meta top top'
-            'author center .'
+            'secondary secondary .'
             'reason reason reason'
             '. . action';
     }
@@ -484,21 +495,8 @@
         background: rgba(239, 68, 68, 0.2);
     }
 
-    .history-author {
-        grid-area: author;
-        align-self: center;
-    }
-
     .history-upload-date {
         margin: 0;
-    }
-
-    .history-center-info {
-        grid-area: center;
-        align-self: end;
-        display: flex;
-        flex-direction: column;
-        gap: 0;
     }
 
     .history-reviewed-by {
@@ -536,15 +534,6 @@
         font-weight: 700;
     }
 
-    .complaint-card {
-        border-color: #2196f3;
-    }
-
-    .complaint-card:hover {
-        border-color: #29a6ff;
-        box-shadow: 0 0 0 1px rgba(33, 150, 243, 0.28);
-    }
-
     .card:hover {
         border-color: #6c63ff;
         box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.28);
@@ -570,8 +559,15 @@
         color: #ffffff;
     }
 
+    .card-secondary-row {
+        grid-area: secondary;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+    }
+
     .pending-author {
-        grid-area: author;
         align-self: center;
     }
 
@@ -593,8 +589,8 @@
     }
 
     .pending-date {
-        grid-area: date;
         align-self: center;
+        text-align: right;
     }
 
     .open-btn {
@@ -666,8 +662,7 @@
             grid-template-columns: 1fr;
             grid-template-areas:
                 'meta'
-                'author'
-                'date'
+                'secondary'
                 'action';
             row-gap: 12px;
         }
@@ -677,8 +672,7 @@
             grid-template-areas:
                 'meta'
                 'top'
-                'author'
-                'center'
+                'secondary'
                 'action';
             row-gap: 12px;
         }
@@ -687,8 +681,7 @@
             grid-template-areas:
                 'meta'
                 'top'
-                'author'
-                'center'
+                'secondary'
                 'reason'
                 'action';
         }
@@ -704,6 +697,12 @@
         .card-right {
             align-items: stretch;
             flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-secondary-row {
+            flex-direction: column;
+            align-items: flex-start;
             gap: 12px;
         }
 

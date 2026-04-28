@@ -17,8 +17,10 @@ public class UploadNoteModel
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int SubjectId { get; set; }
+    public string? SubjectName { get; set; }
     public int? TeacherId { get; set; }
-    public IFormFile File { get; set; } = null!;
+    public string? TeacherName { get; set; }
+    public IFormFile? File { get; set; }
 }
 
 public class ModerateModel
@@ -63,6 +65,7 @@ public class NotesController : ControllerBase
     private const int AutoCheckWordLimit = 2000;
     private const int MaxTextCharsForCheck = 24_000;
     private const int MaxBytesForHeuristicExtraction = 2 * 1024 * 1024;
+    private const long MaxAutoTextExtractionFileSizeBytes = 20L * 1024 * 1024;
 
     private static readonly HashSet<string> AllowedUploadExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -454,6 +457,7 @@ public class NotesController : ControllerBase
     public async Task<IActionResult> GetMyNotes()
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var rejectionActions = new[] { "rejected", "auto_rejected" };
         var notes = await _context.Notes
             .Where(n => n.UserId == userId)
             .Include(n => n.Status)
@@ -472,7 +476,12 @@ public class NotesController : ControllerBase
                 University = n.University != null ? n.University.Name : "",
                 Subject = n.Subject != null ? n.Subject.Name : "",
                 n.DownloadsCount,
-                n.AverageRating
+                n.AverageRating,
+                RejectionReason = _context.ModerationLogs
+                    .Where(l => l.NoteId == n.Id && rejectionActions.Contains(l.Action) && l.Comment != null && l.Comment != "")
+                    .OrderByDescending(l => l.CreatedAt)
+                    .Select(l => l.Comment)
+                    .FirstOrDefault()
             })
             .ToListAsync();
 
@@ -512,19 +521,23 @@ public class NotesController : ControllerBase
 
     [HttpPost("upload")]
     [Authorize(Roles = "student")]
+    [RequestSizeLimit(104857600)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 104857600, ValueLengthLimit = int.MaxValue)]
     public async Task<IActionResult> UploadNote([FromForm] UploadNoteModel model, CancellationToken cancellationToken)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken);
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (user == null)
         {
             return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Требуется авторизация", detail: "Пользователь из токена не найден.");
         }
 
-        var subject = await _context.Subjects.FindAsync(new object[] { model.SubjectId }, cancellationToken);
+        var subject = await ResolveSubjectAsync(user, model.SubjectId, model.SubjectName, cancellationToken);
+
         if (subject == null)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Предмет не найден");
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Предмет не найден", detail: "Выберите предмет из списка вашего вуза.");
         }
 
         if (subject.UniversityId != user.UniversityId)
@@ -532,18 +545,15 @@ public class NotesController : ControllerBase
             return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Предмет не принадлежит вашему университету");
         }
 
-        if (model.TeacherId.HasValue)
+        var teacher = await ResolveTeacherAsync(user, model.TeacherId, model.TeacherName, cancellationToken);
+        if (model.TeacherId.HasValue && teacher == null)
         {
-            var teacher = await _context.Teachers.FindAsync(new object[] { model.TeacherId.Value }, cancellationToken);
-            if (teacher == null)
-            {
-                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Преподаватель не найден");
-            }
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Преподаватель не найден", detail: "Выберите преподавателя из списка вашего вуза.");
+        }
 
-            if (teacher.UniversityId != user.UniversityId)
-            {
-                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Преподаватель не принадлежит вашему университету");
-            }
+        if (teacher != null && teacher.UniversityId != user.UniversityId)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Преподаватель не принадлежит вашему университету");
         }
 
         if (model.File == null || model.File.Length == 0)
@@ -571,11 +581,6 @@ public class NotesController : ControllerBase
             return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Формат файла запрещён", detail: "Файл должен быть корректным PDF-документом.");
         }
 
-        if (ContainsForbiddenKeyword(model.Title) || ContainsForbiddenKeyword(model.Description) || ContainsForbiddenKeyword(model.File.FileName))
-        {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Обнаружены запрещённые ключевые слова", detail: "Конспект содержит запрещённые слова: \"ответы\" или \"тест\".");
-        }
-
         var uploadsFolder = GetPrivateUploadsDirectory();
         if (!Directory.Exists(uploadsFolder))
         {
@@ -590,20 +595,26 @@ public class NotesController : ControllerBase
             await model.File.CopyToAsync(stream, cancellationToken);
         }
 
-        string extractedText;
-        try
-        {
-            extractedText = await ExtractTextContentAsync(absoluteFilePath, extension, cancellationToken);
-        }
-        catch
-        {
-            extractedText = string.Empty;
-        }
+        var containsSuspiciousKeywords =
+            ContainsForbiddenKeyword(model.Title) ||
+            ContainsForbiddenKeyword(model.Description) ||
+            ContainsForbiddenKeyword(model.File.FileName);
 
-        if (ContainsForbiddenKeyword(extractedText))
+        var skippedAutoCheckForLargeFile = model.File.Length > MaxAutoTextExtractionFileSizeBytes;
+        var extractedText = string.Empty;
+
+        if (!skippedAutoCheckForLargeFile)
         {
-            System.IO.File.Delete(absoluteFilePath);
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Обнаружены запрещённые ключевые слова", detail: "В тексте файла найдены запрещённые слова: \"ответы\" или \"тест\".");
+            try
+            {
+                extractedText = await ExtractTextContentAsync(absoluteFilePath, extension, cancellationToken);
+            }
+            catch
+            {
+                extractedText = string.Empty;
+            }
+
+            containsSuspiciousKeywords = containsSuspiciousKeywords || ContainsForbiddenKeyword(extractedText);
         }
 
         var relativePath = $"/uploads/{uniqueFileName}";
@@ -611,7 +622,15 @@ public class NotesController : ControllerBase
         var autoDecision = AutoCheckDecision.SendToModeration;
         var systemComment = "Файл отправлен модератору на ручную проверку.";
 
-        if (wordsCount > 0 && wordsCount <= AutoCheckWordLimit)
+        if (skippedAutoCheckForLargeFile)
+        {
+            systemComment = $"Файл больше {MaxAutoTextExtractionFileSizeBytes / (1024 * 1024)} МБ и отправлен модератору без автопроверки текста.";
+        }
+        else if (containsSuspiciousKeywords)
+        {
+            systemComment = "Найдены потенциально спорные ключевые слова. Конспект отправлен модератору на ручную проверку.";
+        }
+        else if (wordsCount > 0 && wordsCount <= AutoCheckWordLimit)
         {
             autoDecision = EvaluateDescriptionMatch(model.Description, extractedText);
             if (autoDecision == AutoCheckDecision.Approve)
@@ -653,8 +672,8 @@ public class NotesController : ControllerBase
         {
             UserId = userId,
             UniversityId = user.UniversityId,
-            SubjectId = model.SubjectId,
-            TeacherId = model.TeacherId,
+            SubjectId = subject.Id,
+            TeacherId = teacher?.Id,
             StatusId = statusId,
             Title = model.Title,
             Description = model.Description,
@@ -689,6 +708,63 @@ public class NotesController : ControllerBase
             StatusId = note.StatusId,
             Message = responseMessage
         });
+    }
+
+    private async Task<Subject?> ResolveSubjectAsync(User user, int subjectId, string? subjectName, CancellationToken cancellationToken)
+    {
+        var subjects = await _context.Subjects
+            .Where(s => s.UniversityId == user.UniversityId)
+            .OrderBy(s => s.Id)
+            .ToListAsync(cancellationToken);
+
+        var subjectById = subjects.FirstOrDefault(s => s.Id == subjectId);
+        if (subjectById != null)
+        {
+            return subjectById;
+        }
+
+        var normalizedSubjectName = NormalizeReferenceValue(subjectName);
+        if (string.IsNullOrWhiteSpace(normalizedSubjectName))
+        {
+            return null;
+        }
+
+        return subjects.FirstOrDefault(s => NormalizeReferenceValue(s.Name) == normalizedSubjectName);
+    }
+
+    private async Task<Teacher?> ResolveTeacherAsync(User user, int? teacherId, string? teacherName, CancellationToken cancellationToken)
+    {
+        if (!teacherId.HasValue && string.IsNullOrWhiteSpace(teacherName))
+        {
+            return null;
+        }
+
+        var teachers = await _context.Teachers
+            .Where(t => t.UniversityId == user.UniversityId)
+            .OrderBy(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        var teacherById = teacherId.HasValue
+            ? teachers.FirstOrDefault(t => t.Id == teacherId.Value)
+            : null;
+        if (teacherById != null)
+        {
+            return teacherById;
+        }
+
+        var normalizedTeacherName = NormalizeReferenceValue(teacherName);
+        if (string.IsNullOrWhiteSpace(normalizedTeacherName))
+        {
+            return null;
+        }
+
+        return teachers.FirstOrDefault(t => NormalizeReferenceValue(t.FullName) == normalizedTeacherName);
+    }
+
+    private static string NormalizeReferenceValue(string? value)
+    {
+        return string.Join(' ', (value ?? string.Empty).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            .ToLowerInvariant();
     }
 
     [HttpPost("moderate/{noteId:int}")]
@@ -872,6 +948,9 @@ public class NotesController : ControllerBase
             {
                 n.Id,
                 n.Title,
+                n.SubjectId,
+                n.TeacherId,
+                n.UniversityId,
                 Subject = n.Subject != null ? n.Subject.Name : "",
                 Teacher = n.Teacher != null ? n.Teacher.FullName : "",
                 University = n.University != null ? n.University.Name : "",
@@ -1362,6 +1441,11 @@ public class NotesController : ControllerBase
                 return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Предмет не найден");
             }
 
+            if (subject.UniversityId != note.UniversityId)
+            {
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "РџСЂРµРґРјРµС‚ РЅРµ РїСЂРёРЅР°РґР»РµР¶РёС‚ РІС‹Р±СЂР°РЅРЅРѕРјСѓ РІСѓР·Сѓ");
+            }
+
             note.SubjectId = model.SubjectId.Value;
         }
 
@@ -1371,6 +1455,11 @@ public class NotesController : ControllerBase
             if (teacher == null)
             {
                 return Problem(statusCode: StatusCodes.Status400BadRequest, title: "Преподаватель не найден");
+            }
+
+            if (teacher.UniversityId != note.UniversityId)
+            {
+                return Problem(statusCode: StatusCodes.Status400BadRequest, title: "РџСЂРµРїРѕРґР°РІР°С‚РµР»СЊ РЅРµ РїСЂРёРЅР°РґР»РµР¶РёС‚ РІС‹Р±СЂР°РЅРЅРѕРјСѓ РІСѓР·Сѓ");
             }
 
             note.TeacherId = model.TeacherId.Value;

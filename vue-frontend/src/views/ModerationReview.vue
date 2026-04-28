@@ -566,7 +566,7 @@
     }
 
     .topbar-inner {
-        width: min(1189px, calc(100vw - 40px));
+        width: min(1263px, calc(100vw - 40px));
         margin: 0 auto;
         height: 100%;
         display: flex;
